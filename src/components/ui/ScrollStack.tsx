@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef, useCallback } from 'react';
+﻿import React, { useLayoutEffect, useRef, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import Lenis from 'lenis';
 import './ScrollStack.css';
@@ -334,4 +334,5 @@ const ScrollStack: React.FC<ScrollStackProps> = ({
 };
 
 export default ScrollStack;
+
 

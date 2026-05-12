@@ -1,4 +1,4 @@
-import { ref, get } from 'firebase/database';
+﻿import { ref, get } from 'firebase/database';
 import { database } from '@/config/firebase';
 
 export interface TrackingClick {
@@ -165,3 +165,4 @@ export function buildDailyClicksSeries(
     engagement: bucket.count,
   }));
 }
+

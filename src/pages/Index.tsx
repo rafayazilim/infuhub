@@ -1,43 +1,35 @@
 import React from "react";
 import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
 import { HeroSection } from "@/components/landing/HeroSection";
+import { TrustSection } from "@/components/landing/TrustSection";
+import { LogoMarqueeSection } from "@/components/landing/LogoMarqueeSection";
+import { ComparisonSection } from "@/components/landing/ComparisonSection";
+import { BrandsSection } from "@/components/landing/BrandsSection";
+import { InfluencersSection } from "@/components/landing/InfluencersSection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
-import { StatsSection } from "@/components/landing/StatsSection";
 import { CTASection } from "@/components/landing/CTASection";
-import ScrollReveal from "@/components/ui/ScrollReveal";
+import { Footer } from "@/components/layout/Footer";
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen text-gray-900 dark:text-white antialiased overflow-x-hidden bg-gradient-to-b from-[#f7fbff] via-[#fdf6fb] to-white">
+      <div className="pointer-events-none fixed inset-0 -z-10">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(8,175,213,0.18),_transparent_55%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,_rgba(227,68,124,0.16),_transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,_rgba(8,175,213,0.12),_transparent_50%)]" />
+        <div className="absolute inset-0 opacity-[0.08] [background-image:radial-gradient(rgba(8,175,213,0.35)_1px,transparent_1px)] [background-size:18px_18px]" />
+      </div>
       <Navbar />
-      <main>
-        <HeroSection />
-        <HowItWorksSection />
-        <FeaturesSection />
-        
-        {/* Scroll Reveal Section */}
-        <section className="relative overflow-hidden">
-          <div className="container mx-auto px-4">
-            <ScrollReveal
-              baseOpacity={0.2}
-              enableBlur={true}
-              baseRotation={5}
-              blurStrength={10}
-              containerClassName=""
-              textClassName="text-white"
-              rotationEnd="center center"
-              wordAnimationEnd="center center"
-            >
-              Influencer marketing sadece bir trend mi? Hayır! Markaların unutulmaması için doğru influencer'ları bulması mı gerekiyor? Evet! İNFUHUB ile AI destekli akıllı eşleştirme sayesinde markanız doğru kitleye ulaşır, influencer'lar gerçek değerlerini bulur. Unutulmamak için doğru eşleşmeyi seçin!
-            </ScrollReveal>
-          </div>
-        </section>
-
-        <StatsSection />
-        <CTASection />
-      </main>
+      <HeroSection />
+      <LogoMarqueeSection />
+      <TrustSection />
+      <ComparisonSection />
+      <BrandsSection />
+      <InfluencersSection />
+      <HowItWorksSection />
+      <FeaturesSection />
+      <CTASection />
       <Footer />
     </div>
   );

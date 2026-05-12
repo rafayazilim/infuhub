@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+﻿import React, { useEffect, useState, useRef } from "react";
 import { motion, useInView } from "framer-motion";
 
 interface AnimatedCounterProps {
@@ -60,3 +60,4 @@ export const AnimatedCounter: React.FC<AnimatedCounterProps> = ({
     </motion.span>
   );
 };
+

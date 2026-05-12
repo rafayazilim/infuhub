@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+﻿import React, { useMemo } from "react";
 import { motion } from "framer-motion";
 
 interface ParticleBackgroundProps {
@@ -88,3 +88,4 @@ export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
     </div>
   );
 };
+

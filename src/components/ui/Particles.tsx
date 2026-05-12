@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+﻿import React, { useEffect, useRef } from 'react';
 import { Renderer, Camera, Geometry, Program, Mesh } from 'ogl';
 
 import './Particles.css';
@@ -257,4 +257,5 @@ const Particles: React.FC<ParticlesProps> = ({
 };
 
 export default Particles;
+
 

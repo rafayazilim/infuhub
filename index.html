@@ -1,26 +1,86 @@
 <!doctype html>
-<html lang="tr">
+<html lang="tr" class="dark" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>İNFUHUB - Akıllı Influencer Eşleşme Platformu</title>
-    <meta name="description" content="İNFUHUB - Markalar ve influencer'lar için akıllı eşleşme platformu. Doğru marka, doğru influencer, maksimum etki." />
-    <meta name="keywords" content="influencer marketing, marka işbirliği, influencer platformu, dijital pazarlama, sosyal medya" />
-    <meta name="author" content="İNFUHUB" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
+    <title>infuhub | Yapay Zeka Destekli Marka İnfluencer Eşleşme Platformu</title>
+    <meta
+      name="description"
+      content="Markalar ve influencerlar için akıllı eşleşme, teklif yönetimi, kampanya takibi ve performans analizi tek platformda."
+    />
+    <meta name="keywords" content="influencer marketing, marka işbirliği, influencer platformu, dijital pazarlama, sosyal medya, INFUHUB" />
+    <meta name="author" content="INFUHUB" />
 
-    <meta property="og:title" content="İNFUHUB - Akıllı Influencer Eşleşme Platformu" />
-    <meta property="og:description" content="Markalar ve influencer'lar için akıllı eşleşme platformu. Kampanya başarı oranınızı artırın." />
+    <link rel="canonical" href="https://infuhub.ai/" />
+
+    <meta property="og:site_name" content="INFUHUB" />
+    <meta property="og:url" content="https://infuhub.ai/" />
+    <meta property="og:title" content="infuhub | Yapay Zeka Destekli Marka İnfluencer Eşleşme Platformu" />
+    <meta
+      property="og:description"
+      content="Markalar ve influencerlar için akıllı eşleşme, teklif yönetimi, kampanya takibi ve performans analizi tek platformda."
+    />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <meta property="og:image" content="https://infuhub.ai/pics/infulink.png" />
+    <meta property="og:locale" content="tr_TR" />
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@infuhub" />
-    <meta name="twitter:title" content="İNFUHUB - Akıllı Influencer Eşleşme Platformu" />
-    <meta name="twitter:description" content="Markalar ve influencer'lar için akıllı eşleşme platformu." />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <meta name="twitter:title" content="infuhub | Yapay Zeka Destekli Marka İnfluencer Eşleşme Platformu" />
+    <meta
+      name="twitter:description"
+      content="Markalar ve influencerlar için akıllı eşleşme, teklif yönetimi, kampanya takibi ve performans analizi tek platformda."
+    />
+    <meta name="twitter:image" content="https://infuhub.ai/pics/infulink.png" />
+
+    <link rel="icon" type="image/png" href="/pics/infuhub-ai-favicon.png" />
+
+    <!-- Meta Pixel Code -->
+    <script>
+      !(function (f, b, e, v, n, t, s) {
+        if (f.fbq) return;
+        n = f.fbq = function () {
+          n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
+        };
+        if (!f._fbq) f._fbq = n;
+        n.push = n;
+        n.loaded = !0;
+        n.version = "2.0";
+        n.queue = [];
+        t = b.createElement(e);
+        t.async = !0;
+        t.src = v;
+        s = b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t, s);
+      })(window, document, "script", "https://connect.facebook.net/en_US/fbevents.js");
+      fbq("init", "1801671057475303");
+      fbq("track", "PageView");
+    </script>
+    <script>
+      window.__INFUHUB_META_PIXEL_INIT__ = true;
+    </script>
+    <!-- End Meta Pixel Code -->
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
   </head>
 
   <body>
+    <!-- Meta Pixel: noscript yalnızca body içinde geçerlidir (<head> içinde img parse5 ile reddedilir) -->
+    <noscript>
+      <img
+        height="1"
+        width="1"
+        style="display: none"
+        src="https://www.facebook.com/tr?id=1801671057475303&amp;ev=PageView&amp;noscript=1"
+        alt=""
+      />
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

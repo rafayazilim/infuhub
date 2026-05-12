@@ -1,15 +1,13 @@
-import React from 'react';
+﻿import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
+  Compass,
   LayoutDashboard,
   Megaphone,
   Wallet,
   Users,
   MessageSquare,
-  BarChart3,
   Link2,
-  FileText,
-  Bell,
   Settings,
 } from 'lucide-react';
 
@@ -25,7 +23,7 @@ const MenuItem: React.FC<MenuItemProps> = ({ icon, label, active, onClick }) => 
     onClick={onClick}
     className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-[10px] transition-all duration-150 ${
       active
-        ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
+        ? 'bg-[#08afd5]/15 dark:bg-[#08afd5]/20 text-[#08afd5] dark:text-[#6edff3]'
         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100/80 dark:hover:bg-gray-800/80'
     }`}
   >
@@ -49,14 +47,12 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
 }) => {
   const menuItems = [
     { id: 'dashboard', icon: <LayoutDashboard size={18} />, label: 'Dashboard' },
+    { id: 'discover', icon: <Compass size={18} />, label: 'Influencer Keşfi' },
     { id: 'campaigns', icon: <Megaphone size={18} />, label: 'Kampanyalar' },
     { id: 'budget', icon: <Wallet size={18} />, label: 'Bütçe & Harcamalar' },
     { id: 'offers', icon: <Users size={18} />, label: 'Influencer Teklifleri' },
     { id: 'messages', icon: <MessageSquare size={18} />, label: 'Mesajlar' },
-    { id: 'analytics', icon: <BarChart3 size={18} />, label: 'Analitik' },
     { id: 'tracking', icon: <Link2 size={18} />, label: 'Takip Linkleri' },
-    { id: 'reports', icon: <FileText size={18} />, label: 'Raporlar' },
-    { id: 'notifications', icon: <Bell size={18} />, label: 'Bildirimler' },
     { id: 'settings', icon: <Settings size={18} />, label: 'Ayarlar' },
   ];
 
@@ -107,3 +103,6 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
     </AnimatePresence>
   );
 };
+
+
+

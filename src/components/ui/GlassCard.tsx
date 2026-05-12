@@ -1,4 +1,4 @@
-import * as React from "react";
+﻿import * as React from "react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
@@ -36,3 +36,4 @@ export const GlassCard: React.FC<GlassCardProps> = ({
     </motion.div>
   );
 };
+

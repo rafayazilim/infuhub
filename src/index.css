@@ -16,7 +16,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 10%;
 
-    --primary: 262 83% 58%;
+    --primary: 191 93% 44%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 240 5% 96%;
@@ -33,32 +33,37 @@
 
     --border: 240 6% 90%;
     --input: 240 6% 90%;
-    --ring: 262 83% 58%;
+    --ring: 191 93% 44%;
 
     --radius: 0.75rem;
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 240 10% 10%;
-    --sidebar-primary: 262 83% 58%;
+    --sidebar-primary: 191 93% 44%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 240 5% 96%;
     --sidebar-accent-foreground: 240 10% 10%;
     --sidebar-border: 240 6% 90%;
-    --sidebar-ring: 262 83% 58%;
+    --sidebar-ring: 191 93% 44%;
+
+    --brand-secondary: 338 74% 58%;
+
+    /* Özel imleç (landing + Tailwind cursor:pointer ile paylaşılır) — 32×32 görünüm */
+    --infuhub-cursor: url("/pics/infucursor2-32.png") 0 0, auto;
   }
 
   .dark {
     /* Dark Mode - Koyu gri tonları (tam siyah değil) */
-    --background: 240 10% 4%;
+    --background: 224 39% 12%;
     --foreground: 0 0% 98%;
 
-    --card: 240 10% 7%;
+    --card: 224 34% 14%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 240 10% 7%;
+    --popover: 224 34% 14%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 262 83% 58%;
+    --primary: 191 93% 44%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 240 4% 16%;
@@ -75,16 +80,18 @@
 
     --border: 240 4% 16%;
     --input: 240 4% 16%;
-    --ring: 262 83% 58%;
+    --ring: 191 93% 44%;
 
-    --sidebar-background: 240 10% 7%;
+    --sidebar-background: 224 34% 14%;
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 262 83% 58%;
+    --sidebar-primary: 191 93% 44%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 240 4% 16%;
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 240 4% 16%;
-    --sidebar-ring: 262 83% 58%;
+    --sidebar-ring: 191 93% 44%;
+
+    --brand-secondary: 338 74% 58%;
   }
 }
 
@@ -93,16 +100,168 @@
     @apply border-border;
   }
 
-  body {
-    @apply bg-background text-foreground antialiased;
+  /* Vite varsayılan şablonundaki #root max-width merkezleme kullanılmıyor; tam genişlik (admin vb.) */
+  #root {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    min-height: 100vh;
   }
 
+  /* Özel imleç: 32×32 px */
   html {
     scroll-behavior: smooth;
+    cursor: var(--infuhub-cursor);
+    width: 100%;
+    /* iOS metin otomatik büyütmesini sabitle */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    width: 100%;
+    margin: 0;
+    cursor: var(--infuhub-cursor);
+    background-image:
+      radial-gradient(1100px 520px at 90% -10%, hsl(191 93% 44% / 0.08), transparent),
+      radial-gradient(900px 480px at 10% 110%, hsl(338 74% 58% / 0.08), transparent);
+  }
+
+  /* Özel imleç - tüm etkileşimli öğelerde aynı imleç */
+  a,
+  button,
+  [role="button"],
+  input,
+  textarea,
+  select,
+  [contenteditable="true"],
+  [tabindex]:not([tabindex="-1"]) {
+    cursor: url('/pics/infucursor2-32.png') 0 0, auto;
+  }
+
+  /*
+   * Mobil Safari: input/textarea/select için computed font-size < 16px ise odakta sayfa yakınlaşır.
+   * Küçük ekranlarda en az 16px zorunlu kılınır (Tailwind text-sm vb. üzerine yazılır).
+   */
+  @media screen and (max-width: 1023px) {
+    textarea,
+    select,
+    input:where(
+        :not([type]),
+        [type="text"],
+        [type="email"],
+        [type="password"],
+        [type="number"],
+        [type="tel"],
+        [type="url"],
+        [type="search"],
+        [type="date"],
+        [type="time"],
+        [type="datetime-local"]
+      ) {
+      font-size: 16px !important;
+    }
   }
 }
 
 @layer components {
+  .mac-app-shell {
+    @apply min-h-screen;
+    background-image:
+      linear-gradient(160deg, hsl(0 0% 100% / 0.82), hsl(210 40% 98% / 0.92)),
+      radial-gradient(900px 500px at 100% 0%, hsl(191 93% 44% / 0.10), transparent),
+      radial-gradient(1000px 520px at 0% 100%, hsl(338 74% 58% / 0.08), transparent);
+  }
+
+  .dark .mac-app-shell {
+    background-image:
+      linear-gradient(160deg, hsl(224 39% 10% / 0.96), hsl(224 34% 13% / 0.96)),
+      radial-gradient(900px 500px at 100% 0%, hsl(191 93% 44% / 0.16), transparent),
+      radial-gradient(1000px 520px at 0% 100%, hsl(338 74% 58% / 0.12), transparent);
+  }
+
+  .mac-sidebar {
+    @apply backdrop-blur-2xl border-r;
+    background: linear-gradient(
+      180deg,
+      hsl(0 0% 100% / 0.88) 0%,
+      hsl(210 40% 98% / 0.78) 100%
+    );
+    border-color: hsl(var(--border) / 0.65);
+  }
+
+  .dark .mac-sidebar {
+    background: linear-gradient(
+      180deg,
+      hsl(224 34% 14% / 0.88) 0%,
+      hsl(224 34% 12% / 0.82) 100%
+    );
+  }
+
+  .mac-surface {
+    @apply border rounded-2xl backdrop-blur-xl;
+    border-color: hsl(var(--border) / 0.65);
+    background: hsl(var(--card) / 0.76);
+    box-shadow:
+      0 10px 30px hsl(220 40% 2% / 0.08),
+      inset 0 1px 0 hsl(0 0% 100% / 0.45);
+  }
+
+  .dark .mac-surface {
+    box-shadow:
+      0 16px 40px hsl(220 40% 2% / 0.35),
+      inset 0 1px 0 hsl(0 0% 100% / 0.06);
+  }
+
+  .mac-glass {
+    @apply border rounded-xl backdrop-blur-lg;
+    border-color: hsl(var(--border) / 0.6);
+    background: hsl(var(--card) / 0.58);
+  }
+
+  /* bg-primary vb. utility’ler @layer utilities içinde geldiği için burada net renk her zaman kazanmalı */
+  .brand-btn-primary {
+    background-color: #08afd5 !important;
+    color: #fff !important;
+  }
+
+  .brand-btn-primary:hover {
+    background-color: #0797b7 !important;
+    color: #fff !important;
+  }
+
+  .brand-btn-secondary {
+    background-color: #e3447c !important;
+    color: #fff !important;
+  }
+
+  .brand-btn-secondary:hover {
+    background-color: #cc3b6f !important;
+    color: #fff !important;
+  }
+
+  .brand-accent-text {
+    color: #08afd5;
+  }
+
+  .brand-accent-pink {
+    color: #e3447c;
+  }
+
+  .brand-pill-active {
+    background: #08afd5;
+    color: white;
+    box-shadow: 0 8px 22px hsl(191 93% 44% / 0.35);
+  }
+
+  .brand-pill {
+    @apply rounded-full border px-3 py-1.5 text-xs font-medium transition-all;
+    border-color: hsl(var(--border) / 0.75);
+    background: hsl(var(--card) / 0.75);
+    color: hsl(var(--muted-foreground));
+  }
+
   /* Glassmorphism card */
   .glass-card {
     background: var(--glass-bg);
@@ -249,4 +408,93 @@
   .text-balance {
     text-wrap: balance;
   }
+
+  .mac-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(191 93% 44% / 0.45) transparent;
+  }
+
+  .mac-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .mac-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .mac-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #08afd5, #e3447c);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  /* Kayıt formları — range slider (koyu modda iz görünür) */
+  input.register-range-input[type="range"] {
+    width: 100%;
+    height: 10px;
+    border-radius: 9999px;
+    appearance: none;
+    background: transparent;
+  }
+
+  input.register-range-input[type="range"]::-webkit-slider-runnable-track {
+    height: 8px;
+    border-radius: 9999px;
+    background: hsl(var(--muted));
+  }
+
+  .dark input.register-range-input[type="range"]::-webkit-slider-runnable-track {
+    background: rgb(71 85 105);
+    box-shadow: inset 0 0 0 1px rgb(148 163 184 / 0.4);
+  }
+
+  input.register-range-input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    margin-top: -5px;
+    height: 18px;
+    width: 18px;
+    border-radius: 50%;
+    background: #08afd5;
+    border: 2px solid rgb(255 255 255 / 0.9);
+    box-shadow: 0 2px 8px rgba(8, 175, 213, 0.45);
+    cursor: pointer;
+  }
+
+  .dark input.register-range-input[type="range"]::-webkit-slider-thumb {
+    border-color: rgb(15 23 42);
+    box-shadow:
+      0 0 0 1px rgb(110 223 243 / 0.45),
+      0 2px 10px rgba(8, 175, 213, 0.35);
+  }
+
+  input.register-range-input[type="range"]::-moz-range-track {
+    height: 8px;
+    border-radius: 9999px;
+    background: hsl(var(--muted));
+  }
+
+  .dark input.register-range-input[type="range"]::-moz-range-track {
+    background: rgb(71 85 105);
+    box-shadow: inset 0 0 0 1px rgb(148 163 184 / 0.4);
+  }
+
+  input.register-range-input[type="range"]::-moz-range-thumb {
+    height: 18px;
+    width: 18px;
+    border-radius: 50%;
+    background: #08afd5;
+    border: 2px solid rgb(255 255 255 / 0.9);
+    box-shadow: 0 2px 8px rgba(8, 175, 213, 0.45);
+    cursor: var(--infuhub-cursor);
+  }
 }
+
+/* Tailwind cursor-pointer özel imleci ezmesin */
+@layer utilities {
+  .cursor-pointer {
+    cursor: var(--infuhub-cursor);
+  }
+}
+

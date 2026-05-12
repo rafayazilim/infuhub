@@ -1,5 +1,6 @@
 const { database } = require('../utils/firebaseClient');
 const crypto = require('crypto');
+const { getTrackingBaseUrl } = require('../utils/siteOrigin');
 
 /**
  * Unique short code oluştur (5-7 karakter)
@@ -70,7 +71,7 @@ async function createTrackingLink(offerId, targetUrl, platform = 'instagram') {
       
       if (activeLink) {
         // Mevcut aktif linki döndür
-        const baseUrl = process.env.BASE_TRACKING_DOMAIN || 'http://localhost:3002';
+        const baseUrl = getTrackingBaseUrl();
         return {
           ...activeLink,
           clickCount: activeLink.clickCount || 0,
@@ -99,7 +100,7 @@ async function createTrackingLink(offerId, targetUrl, platform = 'instagram') {
 
     await database.ref(`tracking_links/${shortCode}`).set(trackingLinkData);
 
-    const baseUrl = process.env.BASE_TRACKING_DOMAIN || 'http://localhost:3002';
+    const baseUrl = getTrackingBaseUrl();
     const trackingUrl = `${baseUrl}/c/${shortCode}`;
 
     return {

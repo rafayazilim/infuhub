@@ -1,4 +1,5 @@
-const API_BASE_URL = 'http://localhost:3002/api';
+﻿import { getAuthHeaders } from '@/services/authToken';
+import { buildApiUrl } from '@/lib/apiConfig';
 
 export interface Offer {
   id?: string;
@@ -32,10 +33,12 @@ export interface OfferFilters {
 
 // Send offer to influencer
 export async function sendOffer(offer: Offer): Promise<Offer> {
-  const response = await fetch(`${API_BASE_URL}/offers/send`, {
+  const authHeaders = await getAuthHeaders();
+  const response = await fetch(buildApiUrl('/offers/send'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      ...authHeaders,
     },
     body: JSON.stringify(offer),
   });
@@ -51,7 +54,12 @@ export async function sendOffer(offer: Offer): Promise<Offer> {
 
 // Get offers by brand
 export async function getOffersByBrand(brandId: string): Promise<Offer[]> {
-  const response = await fetch(`${API_BASE_URL}/offers/brand/${brandId}`);
+  const authHeaders = await getAuthHeaders();
+  const response = await fetch(buildApiUrl(`/offers/brand/${brandId}`), {
+    headers: {
+      ...authHeaders,
+    },
+  });
   const data = await response.json();
 
   if (!data.success) {
@@ -63,7 +71,12 @@ export async function getOffersByBrand(brandId: string): Promise<Offer[]> {
 
 // Get offer by ID
 export async function getOfferById(offerId: string): Promise<Offer> {
-  const response = await fetch(`${API_BASE_URL}/offers/${offerId}`);
+  const authHeaders = await getAuthHeaders();
+  const response = await fetch(buildApiUrl(`/offers/${offerId}`), {
+    headers: {
+      ...authHeaders,
+    },
+  });
   const data = await response.json();
 
   if (!data.success) {
@@ -78,10 +91,12 @@ export async function updateOfferStatus(
   offerId: string,
   status: 'beklemede' | 'kabul' | 'red'
 ): Promise<Offer> {
-  const response = await fetch(`${API_BASE_URL}/offers/${offerId}/status`, {
+  const authHeaders = await getAuthHeaders();
+  const response = await fetch(buildApiUrl(`/offers/${offerId}/status`), {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
+      ...authHeaders,
     },
     body: JSON.stringify({ status }),
   });
@@ -97,7 +112,12 @@ export async function updateOfferStatus(
 
 // Get offer stats for brand
 export async function getOfferStats(brandId: string): Promise<any> {
-  const response = await fetch(`${API_BASE_URL}/offers/stats/${brandId}`);
+  const authHeaders = await getAuthHeaders();
+  const response = await fetch(buildApiUrl(`/offers/stats/${brandId}`), {
+    headers: {
+      ...authHeaders,
+    },
+  });
   const data = await response.json();
 
   if (!data.success) {
@@ -106,3 +126,5 @@ export async function getOfferStats(brandId: string): Promise<any> {
 
   return data.data;
 }
+
+

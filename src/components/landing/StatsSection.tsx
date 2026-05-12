@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { motion } from "framer-motion";
 import { AnimatedCounter } from "@/components/ui/AnimatedCounter";
 import Particles from "@/components/ui/Particles";
@@ -85,3 +85,5 @@ export const StatsSection: React.FC = () => {
     </section>
   );
 };
+
+

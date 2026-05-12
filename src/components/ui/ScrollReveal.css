@@ -1,4 +1,4 @@
-.scroll-reveal {
+﻿.scroll-reveal {
   font-size: clamp(2rem, 5vw, 4rem);
   font-weight: 700;
   line-height: 1.4;
@@ -35,4 +35,5 @@
     padding: 1.5rem 1rem;
   }
 }
+
 

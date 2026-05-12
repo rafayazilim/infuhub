@@ -1,149 +1,93 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
-import { Building2, User, ArrowRight } from "lucide-react";
-import { ParticleBackground } from "@/components/ui/ParticleBackground";
+import { ArrowLeft, Building2, User } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+
+const optionCardClass = cn(
+  "h-full p-5 rounded-xl border-2 transition-all duration-200",
+  "border-border/90 bg-card shadow-sm",
+  "hover:border-[#08afd5]/45 hover:shadow-md",
+  "dark:border-slate-500/70 dark:bg-slate-950/90",
+  "dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]",
+  "dark:hover:border-[#6edff3]/55 dark:hover:bg-slate-900/95 dark:hover:shadow-[0_0_0_1px_rgba(110,223,243,0.2)]"
+);
+
+const ctaClass = cn(
+  "mt-auto flex w-full items-center justify-center rounded-lg px-4 py-2.5 text-sm font-semibold text-white",
+  "brand-btn-primary shadow-sm",
+  "ring-1 ring-[#08afd5]/30 ring-offset-2 ring-offset-background dark:ring-[#6edff3]/25 dark:ring-offset-slate-950"
+);
 
 const RegistrationSelect = () => {
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <Navbar />
-      
-      <main className="flex-1 flex items-center justify-center relative overflow-hidden pt-20">
-        <ParticleBackground particleCount={30} />
-        
-        <div className="container mx-auto px-4 py-12 relative z-10">
-          <motion.div
-            className="text-center mb-12"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <h1 className="text-3xl md:text-4xl font-bold mb-4">
-              Nasıl <span className="gradient-text">Katılmak</span> İstersiniz?
-            </h1>
-            <p className="text-muted-foreground">
-              Size en uygun profil türünü seçin ve hemen başlayın
-            </p>
-          </motion.div>
+    <div className="min-h-screen bg-background px-4 py-8 md:py-14">
+      <div className="max-w-3xl mx-auto">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-5 transition-colors"
+        >
+          <ArrowLeft size={16} />
+          Ana sayfa
+        </Link>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {/* Brand Card */}
-            <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
-              <Link to="/kayit/marka">
-                <motion.div
-                  className="glass-card rounded-3xl p-8 h-full cursor-pointer group relative overflow-hidden"
-                  whileHover={{ 
-                    scale: 1.02, 
-                    boxShadow: "0 0 40px hsl(210 100% 55% / 0.3)",
-                  }}
-                  whileTap={{ scale: 0.98 }}
+        <Card
+          className={cn(
+            "p-6 md:p-8 rounded-2xl border-2 shadow-sm",
+            "border-border/90 bg-card",
+            "dark:border-slate-500/65 dark:bg-slate-900/95",
+            "dark:shadow-lg dark:shadow-black/50",
+            "dark:ring-1 dark:ring-white/[0.08]"
+          )}
+        >
+          <h1 className="text-2xl md:text-3xl font-semibold text-foreground">Kayıt Türü Seçin</h1>
+          <p className="text-sm text-muted-foreground mt-2 mb-6">
+            Hesabınızı nasıl oluşturmak istediğinizi seçin.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
+            <Link to="/kayit/marka" className="block group">
+              <Card className={cn(optionCardClass, "flex flex-col")}>
+                <div
+                  className={cn(
+                    "w-10 h-10 rounded-lg flex items-center justify-center mb-3",
+                    "bg-muted text-foreground",
+                    "dark:bg-slate-800/90 dark:text-[#6edff3]",
+                    "dark:ring-1 dark:ring-slate-500/70"
+                  )}
                 >
-                  {/* Glow effect on hover */}
-                  <motion.div
-                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                    style={{
-                      background: "radial-gradient(circle at center, hsl(210 100% 55% / 0.1) 0%, transparent 70%)",
-                    }}
-                  />
-                  
-                  <div className="relative z-10">
-                    <motion.div
-                      className="w-20 h-20 rounded-2xl bg-primary/20 flex items-center justify-center mb-6 mx-auto"
-                      whileHover={{ rotate: 5, scale: 1.1 }}
-                    >
-                      <Building2 className="w-10 h-10 text-primary" />
-                    </motion.div>
+                  <Building2 size={20} strokeWidth={1.75} />
+                </div>
+                <h2 className="font-semibold text-lg mb-1 text-foreground">Marka</h2>
+                <p className="text-sm text-muted-foreground mb-4 flex-1">
+                  Kampanya oluşturarak influencer&apos;lara teklif gönderin.
+                </p>
+                <span className={ctaClass}>Marka Kaydı</span>
+              </Card>
+            </Link>
 
-                    <h2 className="text-2xl font-bold text-center mb-4">Marka</h2>
-                    
-                    <p className="text-muted-foreground text-center mb-8">
-                      Markanızı büyütmek için doğru influencer'ları bulun. Kampanyalarınızı 
-                      yönetin ve performansınızı takip edin.
-                    </p>
-
-                    <div className="flex items-center justify-center gap-2 text-primary font-semibold group-hover:gap-4 transition-all">
-                      <span>Devam Et</span>
-                      <ArrowRight className="w-5 h-5" />
-                    </div>
-                  </div>
-
-                  {/* Border glow */}
-                  <motion.div
-                    className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-                    style={{
-                      border: "2px solid hsl(210 100% 55% / 0.5)",
-                    }}
-                  />
-                </motion.div>
-              </Link>
-            </motion.div>
-
-            {/* Influencer Card */}
-            <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-            >
-              <Link to="/kayit/influencer">
-                <motion.div
-                  className="glass-card rounded-3xl p-8 h-full cursor-pointer group relative overflow-hidden"
-                  whileHover={{ 
-                    scale: 1.02, 
-                    boxShadow: "0 0 40px hsl(195 85% 55% / 0.3)",
-                  }}
-                  whileTap={{ scale: 0.98 }}
+            <Link to="/kayit/influencer" className="block group">
+              <Card className={cn(optionCardClass, "flex flex-col")}>
+                <div
+                  className={cn(
+                    "w-10 h-10 rounded-lg flex items-center justify-center mb-3",
+                    "bg-muted text-foreground",
+                    "dark:bg-slate-800/90 dark:text-[#6edff3]",
+                    "dark:ring-1 dark:ring-slate-500/70"
+                  )}
                 >
-                  {/* Glow effect on hover */}
-                  <motion.div
-                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                    style={{
-                      background: "radial-gradient(circle at center, hsl(195 85% 55% / 0.1) 0%, transparent 70%)",
-                    }}
-                  />
-                  
-                  <div className="relative z-10">
-                    <motion.div
-                      className="w-20 h-20 rounded-2xl bg-accent/20 flex items-center justify-center mb-6 mx-auto"
-                      whileHover={{ rotate: -5, scale: 1.1 }}
-                    >
-                      <User className="w-10 h-10 text-accent" />
-                    </motion.div>
-
-                    <h2 className="text-2xl font-bold text-center mb-4">Influencer</h2>
-                    
-                    <p className="text-muted-foreground text-center mb-8">
-                      İçeriklerinizi markalarla buluşturun. Yeni iş birlikleri keşfedin 
-                      ve gelirlerinizi artırın.
-                    </p>
-
-                    <div className="flex items-center justify-center gap-2 text-accent font-semibold group-hover:gap-4 transition-all">
-                      <span>Devam Et</span>
-                      <ArrowRight className="w-5 h-5" />
-                    </div>
-                  </div>
-
-                  {/* Border glow */}
-                  <motion.div
-                    className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-                    style={{
-                      border: "2px solid hsl(195 85% 55% / 0.5)",
-                    }}
-                  />
-                </motion.div>
-              </Link>
-            </motion.div>
+                  <User size={20} strokeWidth={1.75} />
+                </div>
+                <h2 className="font-semibold text-lg mb-1 text-foreground">Influencer</h2>
+                <p className="text-sm text-muted-foreground mb-4 flex-1">
+                  Profil oluşturup markalardan iş birliği teklifleri alın.
+                </p>
+                <span className={ctaClass}>Influencer Kaydı</span>
+              </Card>
+            </Link>
           </div>
-        </div>
-      </main>
-
-      <Footer />
+        </Card>
+      </div>
     </div>
   );
 };

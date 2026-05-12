@@ -1,0 +1,198 @@
+# INFUHUB - Ödeme Altyapýsý (Demo) Dokümantasyonu
+
+Bu doküman, sistemdeki ödeme altyapýsýnýn gerçek para transferi yapmadýðýný ve yalnýzca Firebase verisi güncelleyerek simülasyon yaptýðýný teknik olarak açýklar.
+
+## 1) Kapsam ve Gerçeklik Seviyesi
+
+Sistemde iki farklý ödeme benzeri akýþ var:
+
+1. Marka bütçe yükleme akýþý (fake checkout)
+2. Influencer kazanç/çekim akýþý (talep + onay süreçleri)
+
+Önemli:
+
+- Kart ekraný demo amaçlýdýr.
+- Gerçek PSP/ödeme saðlayýcýsýna (Iyzico/Stripe vb.) çýkýþ yoktur.
+- Cüzdan deðiþiklikleri doðrudan Realtime Database yazýmýyla yapýlýr.
+
+## 2) Marka Tarafý: Bütçe Yükleme (Fake Checkout)
+
+Ana UI:
+
+- `src/components/brand/BudgetSpendingContent.tsx`
+
+Ana servis:
+
+- `src/services/firebaseBrandWalletService.ts`
+
+Akýþ:
+
+1. Kullanýcý bütçe tutarý ve kart benzeri alanlarý girer.
+2. `Ödemeyi Tamamla` ile `addBudgetToBrandWallet(brandId, amount, note)` çaðrýlýr.
+3. Servis þu kontrolleri yapar:
+   - Tutar > 0
+   - Marka kaydý mevcut
+4. Sonra DB günceller:
+   - `brands/{brandId}/walletBalance += amount`
+   - `brands/{brandId}/walletLoadedTotal += amount`
+   - `brands/{brandId}/walletSpentTotal` deðiþmez
+5. Ýþlem logu ekler:
+   - `brands/{brandId}/walletTransactions/{txId}`
+   - `type: "topup"`, `amount: +...`, `balanceAfter`
+
+Sonuç:
+
+- Bu adým yalnýzca veritabaný bakiyesini artýrýr.
+- Gerçek banka/ödeme provizyonu yoktur.
+
+## 3) Teklif Kabulünde Marka Bütçe Kesintisi
+
+Ana servis:
+
+- `src/services/firebaseOfferService.ts`
+
+Cüzdan kesinti servisi:
+
+- `src/services/firebaseBrandWalletService.ts` -> `deductBudgetFromBrandWallet`
+
+Kesinti tetiklenen noktalar:
+
+- Influencer doðrudan teklifi kabul ettiðinde: `updateOfferStatus(offerId, "kabul")`
+- Marka, influencer’dan gelen teklifi kabul ettiðinde: `updateIncomingCampaignOfferStatus(..., "kabul")`
+
+Ýç mantýk:
+
+1. `applyBudgetDeductionIfNeeded(...)` çalýþýr.
+2. Ayný teklif için daha önce kesinti yapýlmýþ mý (`budgetDeductedAt`) kontrol edilir.
+3. `deductBudgetFromBrandWallet` çaðrýlýr.
+4. Bakiye yetersizse hata fýrlatýlýr, kabul iþlemi tamamlanmaz.
+5. Baþarýlýysa:
+   - `walletBalance` azalýr
+   - `walletSpentTotal` artar
+   - `walletTransactions` içine `type: "payment"`, negatif `amount` eklenir
+   - Offer üzerine `budgetDeductedAt` ve `budgetDeductedAmount` yazýlýr
+
+Bu sayede ayný tekliften iki kez kesinti engellenmeye çalýþýlýr.
+
+## 4) Ýçerik Onayý Sonrasý Influencer Ödeme Yansýtma
+
+UI tetikleyici:
+
+- `src/components/shared/ContentViewerModal.tsx` -> `approveContent(offerId)`
+
+Servis:
+
+- `src/services/firebaseOfferService.ts` -> `approveContent`
+
+Tasarlanan hedef davranýþ:
+
+- Ýçerik onaylanýnca influencer cüzdanýna gelir yazýlmasý.
+
+Mevcut kod davranýþý (önemli):
+
+- Fonksiyon içinde `auth.currentUser?.uid === offer.influencerId` koþulu var.
+- Onay aksiyonu brand panelinden tetiklendiði için oturumdaki kullanýcý genellikle markadýr.
+- Bu durumda fonksiyon içerik onayý alanýný güncelledikten sonra erken `return` ediyor.
+- Yani influencer `walletBalance/walletTransactions` güncellemesi çoðu durumda çalýþmýyor.
+
+Özet:
+
+- Marka bütçesi teklif kabulünde düþüyor.
+- Ýçerik onayýnda influencer cüzdanýna otomatik aktarým kodu var ama mevcut yetki kontrolü nedeniyle pratikte sýnýrlý çalýþýyor.
+
+## 5) Influencer Tarafý: Kazanç ve Çekim Altyapýsý
+
+Ana UI:
+
+- `src/components/influencer/EarningsContent.tsx`
+
+Ana servis:
+
+- `src/services/firebaseInfluencerPayoutService.ts`
+
+Sabitler:
+
+- `src/constants/payout.ts`
+  - Komisyon: `%5` (`PAYOUT_PLATFORM_COMMISSION_RATE = 0.05`)
+  - Min çekim: `100 TL` brüt
+
+### 5.1 Ödeme doðrulama baþvurusu
+
+1. Influencer IBAN + vergi istisna belgesi yükler.
+2. `submitPayoutVerification(...)` çaðrýlýr.
+3. Belge Storage’a yüklenir:
+   - `payout-tax-docs/{influencerId}`
+4. RTDB yazýmlarý:
+   - `payoutVerificationRequests/influencer/{influencerId}` -> admin kuyruðu
+   - `influencers/{influencerId}/payoutProfile` -> `verificationStatus: "pending"`
+
+### 5.2 Admin onayý/reddi
+
+UI:
+
+- `src/pages/admin/AdminPanel.tsx`
+
+Servis çaðrýlarý:
+
+- `adminApprovePayoutVerification(influencerId)`
+- `adminRejectPayoutVerification(influencerId, reason)`
+
+Onayda:
+
+- `payoutProfile.verificationStatus = "approved"`
+- IBAN ve belge URL’si influencer profiline yazýlýr
+- Request kaydý `onaylandý`
+
+Redde:
+
+- `payoutProfile.verificationStatus = "rejected"`
+- Red nedeni yazýlýr
+- Request kaydý `reddedildi`
+
+### 5.3 Çekim talebi
+
+1. Influencer `createWithdrawalRequest(influencerId, amountGross, offers)` çaðýrýr.
+2. Önce doðrulama kontrolü yapýlýr (`payoutProfile.approved` olmalý).
+3. Brüt kazanç ve önceki çekimlere göre kullanýlabilir bakiye hesaplanýr.
+4. Komisyon/net ayrýþtýrýlýr.
+5. Talep yazýlýr:
+   - `influencers/{influencerId}/withdrawals/{withdrawalId}`
+   - `status: "beklemede"`
+
+Not:
+
+- Bu akýþta da bankaya gerçek EFT/havale yoktur.
+- Çekim talepleri operasyonel iþ listesi niteliðindedir.
+
+## 6) Ödeme ile Ýlgili RTDB Alan Özeti
+
+Marka:
+
+- `brands/{brandId}/walletBalance`
+- `brands/{brandId}/walletLoadedTotal`
+- `brands/{brandId}/walletSpentTotal`
+- `brands/{brandId}/walletTransactions/*`
+
+Teklif:
+
+- `offers/{offerId}/budgetDeductedAt`
+- `offers/{offerId}/budgetDeductedAmount`
+- `offers/{offerId}/contentApproved`
+
+Influencer:
+
+- `influencers/{influencerId}/walletBalance` (mevcut kodda sýnýrlý güncelleniyor)
+- `influencers/{influencerId}/walletTransactions/*`
+- `influencers/{influencerId}/payoutProfile/*`
+- `influencers/{influencerId}/withdrawals/*`
+
+Admin ödeme doðrulama kuyruðu:
+
+- `payoutVerificationRequests/influencer/*`
+
+## 7) Kýsa Sonuç
+
+- Altyapý “ödeme simülasyonu + cüzdan muhasebesi” þeklinde çalýþýr.
+- Marka yükleme/kesinti tarafý DB üzerinde tutarlý bir akýþa sahip.
+- Influencer gerçek ödeme transferi dýþ sistemle entegre deðil.
+- Çekim süreci baþvuru ve durum takibi odaklýdýr, gerçek para transferini otomatik yapmaz.

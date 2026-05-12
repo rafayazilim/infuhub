@@ -1,0 +1,163 @@
+{
+  "version": 1,
+  "maxDisplayBox": {
+    "w": 560,
+    "h": 260
+  },
+  "logos": [
+    {
+      "id": 1,
+      "file": "1.webp",
+      "width": 560,
+      "height": 257,
+      "bytes": 16820
+    },
+    {
+      "id": 2,
+      "file": "2.webp",
+      "width": 560,
+      "height": 257,
+      "bytes": 13460
+    },
+    {
+      "id": 3,
+      "file": "3.webp",
+      "width": 560,
+      "height": 257,
+      "bytes": 10290
+    },
+    {
+      "id": 4,
+      "file": "4.webp",
+      "width": 560,
+      "height": 257,
+      "bytes": 13076
+    },
+    {
+      "id": 5,
+      "file": "5.webp",
+      "width": 560,
+      "height": 257,
+      "bytes": 11650
+    },
+    {
+      "id": 6,
+      "file": "6.webp",
+      "width": 560,
+      "height": 257,
+      "bytes": 3280
+    },
+    {
+      "id": 7,
+      "file": "7.webp",
+      "width": 560,
+      "height": 257,
+      "bytes": 8560
+    },
+    {
+      "id": 8,
+      "file": "8.webp",
+      "width": 560,
+      "height": 257,
+      "bytes": 21158
+    },
+    {
+      "id": 9,
+      "file": "9.webp",
+      "width": 560,
+      "height": 257,
+      "bytes": 12940
+    },
+    {
+      "id": 10,
+      "file": "10.webp",
+      "width": 560,
+      "height": 257,
+      "bytes": 11402
+    },
+    {
+      "id": 11,
+      "file": "11.webp",
+      "width": 560,
+      "height": 257,
+      "bytes": 13564
+    },
+    {
+      "id": 12,
+      "file": "12.webp",
+      "width": 560,
+      "height": 257,
+      "bytes": 12298
+    },
+    {
+      "id": 13,
+      "file": "13.webp",
+      "width": 560,
+      "height": 257,
+      "bytes": 25610
+    },
+    {
+      "id": 14,
+      "file": "14.webp",
+      "width": 560,
+      "height": 257,
+      "bytes": 8538
+    },
+    {
+      "id": 15,
+      "file": "15.webp",
+      "width": 560,
+      "height": 257,
+      "bytes": 10586
+    },
+    {
+      "id": 16,
+      "file": "16.webp",
+      "width": 560,
+      "height": 257,
+      "bytes": 14708
+    },
+    {
+      "id": 17,
+      "file": "17.webp",
+      "width": 560,
+      "height": 257,
+      "bytes": 13224
+    },
+    {
+      "id": 18,
+      "file": "18.webp",
+      "width": 560,
+      "height": 257,
+      "bytes": 17202
+    },
+    {
+      "id": 19,
+      "file": "19.webp",
+      "width": 560,
+      "height": 257,
+      "bytes": 13344
+    },
+    {
+      "id": 20,
+      "file": "20.webp",
+      "width": 560,
+      "height": 257,
+      "bytes": 12742
+    },
+    {
+      "id": 21,
+      "file": "21.webp",
+      "width": 560,
+      "height": 257,
+      "bytes": 6810
+    },
+    {
+      "id": 22,
+      "file": "22.webp",
+      "width": 560,
+      "height": 257,
+      "bytes": 9156
+    }
+  ]
+}

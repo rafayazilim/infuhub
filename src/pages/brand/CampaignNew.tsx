@@ -1,7 +1,8 @@
-import { useNavigate } from 'react-router-dom';
+﻿import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import CampaignForm from './CampaignForm';
 import { createCampaign, Campaign } from '@/services/campaignService';
+import { trackEvent } from '@/utils/metaPixel';
 
 interface CampaignNewProps {
   brandId: string;
@@ -12,6 +13,7 @@ export default function CampaignNew({ brandId }: CampaignNewProps) {
 
   const handleSubmit = async (data: Campaign) => {
     await createCampaign(data);
+    trackEvent('CreateCampaign');
     navigate('/brand/campaigns');
   };
 
@@ -29,3 +31,4 @@ export default function CampaignNew({ brandId }: CampaignNewProps) {
     </DashboardLayout>
   );
 }
+

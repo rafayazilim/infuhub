@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Plus, Trash2, Instagram, Youtube, Edit, Save } from 'lucide-react';
+import { X, Plus, Trash2, Instagram, Youtube, Edit, Save, AlertCircle } from 'lucide-react';
+import { SiPinterest, SiSnapchat, SiTwitch, SiKick, SiLinkedin } from 'react-icons/si';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -32,6 +33,7 @@ interface Platform {
   id: string;
   username: string;
   followers?: number;
+  followersUpdated?: boolean; // Takipçi sayısı daha önce güncellendi mi?
 }
 
 interface PlatformEditModalProps {
@@ -46,6 +48,11 @@ const platformOptions = [
   { id: 'tiktok', label: 'TikTok', icon: <TikTokIcon /> },
   { id: 'youtube', label: 'YouTube', icon: <Youtube size={18} /> },
   { id: 'twitter', label: 'Twitter', icon: <TwitterIcon /> },
+  { id: 'pinterest', label: 'Pinterest', icon: <SiPinterest size={18} /> },
+  { id: 'snapchat', label: 'Snapchat', icon: <SiSnapchat size={18} /> },
+  { id: 'twitch', label: 'Twitch', icon: <SiTwitch size={18} /> },
+  { id: 'kick', label: 'Kick', icon: <SiKick size={18} /> },
+  { id: 'linkedin', label: 'LinkedIn', icon: <SiLinkedin size={18} /> },
 ];
 
 const platformIcons: Record<string, React.ReactNode> = {
@@ -53,6 +60,11 @@ const platformIcons: Record<string, React.ReactNode> = {
   tiktok: <TikTokIcon />,
   youtube: <Youtube size={18} />,
   twitter: <TwitterIcon />,
+  pinterest: <SiPinterest size={18} />,
+  snapchat: <SiSnapchat size={18} />,
+  twitch: <SiTwitch size={18} />,
+  kick: <SiKick size={18} />,
+  linkedin: <SiLinkedin size={18} />,
 };
 
 export function PlatformEditModal({
@@ -83,7 +95,14 @@ export function PlatformEditModal({
     }
 
     if (Array.isArray(profileData.platforms)) {
-      setPlatforms(profileData.platforms);
+      // Array formatında - followersUpdated kontrolü ekle
+      const platformsWithUpdateFlag = profileData.platforms.map((p: Platform) => ({
+        ...p,
+        // Eğer followersUpdated belirtilmemişse, false olarak başlat (bir kere daha güncellenebilir)
+        // Eğer belirtilmişse, o değeri kullan
+        followersUpdated: p.followersUpdated !== undefined ? p.followersUpdated : false,
+      }));
+      setPlatforms(platformsWithUpdateFlag);
     } else {
       // Object formatını array'e çevir
       const platformsArray: Platform[] = [];
@@ -94,6 +113,9 @@ export function PlatformEditModal({
           id: 'instagram',
           username: platformsObj.instagram.username,
           followers: platformsObj.instagram.followers,
+          followersUpdated: platformsObj.instagram.followersUpdated !== undefined 
+            ? platformsObj.instagram.followersUpdated 
+            : false,
         });
       }
       if (platformsObj.tiktok) {
@@ -101,6 +123,9 @@ export function PlatformEditModal({
           id: 'tiktok',
           username: platformsObj.tiktok.username,
           followers: platformsObj.tiktok.followers,
+          followersUpdated: platformsObj.tiktok.followersUpdated !== undefined 
+            ? platformsObj.tiktok.followersUpdated 
+            : false,
         });
       }
       if (platformsObj.youtube) {
@@ -108,6 +133,9 @@ export function PlatformEditModal({
           id: 'youtube',
           username: platformsObj.youtube.username,
           followers: platformsObj.youtube.followers,
+          followersUpdated: platformsObj.youtube.followersUpdated !== undefined 
+            ? platformsObj.youtube.followersUpdated 
+            : false,
         });
       }
       if (platformsObj.twitter) {
@@ -115,6 +143,59 @@ export function PlatformEditModal({
           id: 'twitter',
           username: platformsObj.twitter.username,
           followers: platformsObj.twitter.followers,
+          followersUpdated: platformsObj.twitter.followersUpdated !== undefined 
+            ? platformsObj.twitter.followersUpdated 
+            : false,
+        });
+      }
+      if (platformsObj.pinterest) {
+        platformsArray.push({
+          id: 'pinterest',
+          username: platformsObj.pinterest.username,
+          followers: platformsObj.pinterest.followers,
+          followersUpdated: platformsObj.pinterest.followersUpdated !== undefined
+            ? platformsObj.pinterest.followersUpdated
+            : false,
+        });
+      }
+      if (platformsObj.snapchat) {
+        platformsArray.push({
+          id: 'snapchat',
+          username: platformsObj.snapchat.username,
+          followers: platformsObj.snapchat.followers,
+          followersUpdated: platformsObj.snapchat.followersUpdated !== undefined
+            ? platformsObj.snapchat.followersUpdated
+            : false,
+        });
+      }
+      if (platformsObj.twitch) {
+        platformsArray.push({
+          id: 'twitch',
+          username: platformsObj.twitch.username,
+          followers: platformsObj.twitch.followers,
+          followersUpdated: platformsObj.twitch.followersUpdated !== undefined
+            ? platformsObj.twitch.followersUpdated
+            : false,
+        });
+      }
+      if (platformsObj.kick) {
+        platformsArray.push({
+          id: 'kick',
+          username: platformsObj.kick.username,
+          followers: platformsObj.kick.followers,
+          followersUpdated: platformsObj.kick.followersUpdated !== undefined
+            ? platformsObj.kick.followersUpdated
+            : false,
+        });
+      }
+      if (platformsObj.linkedin) {
+        platformsArray.push({
+          id: 'linkedin',
+          username: platformsObj.linkedin.username,
+          followers: platformsObj.linkedin.followers,
+          followersUpdated: platformsObj.linkedin.followersUpdated !== undefined
+            ? platformsObj.linkedin.followersUpdated
+            : false,
         });
       }
       setPlatforms(platformsArray);
@@ -129,9 +210,39 @@ export function PlatformEditModal({
   // Platform güncelleme
   const handleUpdatePlatform = (index: number, updates: Partial<Platform>) => {
     const updated = [...platforms];
-    updated[index] = { ...updated[index], ...updates };
+    const currentPlatform = updated[index];
+    
+    // Takipçi sayısı güncelleniyorsa kontrol et
+    if (updates.followers !== undefined) {
+      const newFollowersValue = updates.followers;
+      const oldFollowersValue = currentPlatform.followers;
+      
+      // Eğer mevcut takipçi sayısı varsa VE daha önce güncellenmişse, değişikliği engelle
+      if (oldFollowersValue !== undefined && oldFollowersValue !== null && currentPlatform.followersUpdated) {
+        toast({
+          title: 'Uyarı',
+          description: 'Bu platform için takipçi sayısı yalnızca bir kere güncellenebilir.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      
+      // Takipçi sayısı değişiyorsa (yeni değer giriliyor veya değiştiriliyor), followersUpdated flag'ini true yap
+      if (newFollowersValue !== oldFollowersValue) {
+        updated[index] = { 
+          ...currentPlatform, 
+          ...updates,
+          followersUpdated: true,
+        };
+      } else {
+        updated[index] = { ...currentPlatform, ...updates };
+      }
+    } else {
+      // Takipçi sayısı dışındaki güncellemeler
+      updated[index] = { ...currentPlatform, ...updates };
+    }
+    
     setPlatforms(updated);
-    setEditingIndex(null);
   };
 
   // Platform silme
@@ -173,6 +284,9 @@ export function PlatformEditModal({
         id: newPlatform.id,
         username: newPlatform.username,
         followers,
+        // Yeni platform eklenirken takipçi sayısı girilmişse, bu ilk giriş sayılır ve güncelleme yapılabilir
+        // followersUpdated: false olarak başlatıyoruz, böylece ileride bir kere daha güncelleyebilir
+        followersUpdated: false,
       },
     ]);
 
@@ -239,7 +353,7 @@ export function PlatformEditModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60]"
           />
 
           {/* Modal */}
@@ -248,10 +362,12 @@ export function PlatformEditModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 20 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-[60] flex items-center justify-center p-3 md:p-4 pointer-events-none"
           >
-            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden border border-gray-200/50 dark:border-gray-800/50">
+            <div 
+              className="mac-surface rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden border border-gray-200/50 dark:border-gray-800/50 pointer-events-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
               {/* Header */}
               <div className="flex items-center justify-between p-6 border-b border-gray-200/50 dark:border-gray-800/50">
                 <div>
@@ -292,7 +408,7 @@ export function PlatformEditModal({
                             {editingIndex === index ? (
                               <div className="space-y-3">
                                 <div className="flex items-center gap-3 mb-3">
-                                  <div className="text-purple-600 dark:text-purple-400">
+                                  <div className="text-[#08afd5] dark:text-[#7ce7ff]">
                                     {platformIcons[platform.id] || <Instagram size={20} />}
                                   </div>
                                   <span className="font-medium text-gray-900 dark:text-white capitalize">
@@ -316,6 +432,11 @@ export function PlatformEditModal({
                                 <div>
                                   <Label className="text-sm text-gray-700 dark:text-gray-300">
                                     Takipçi Sayısı
+                                    {platform.followers !== undefined && platform.followers !== null && platform.followersUpdated && (
+                                      <span className="ml-2 text-xs text-amber-600 dark:text-amber-400 font-normal">
+                                        (Yalnızca bir kere güncellenebilir)
+                                      </span>
+                                    )}
                                   </Label>
                                   <Input
                                     type="text"
@@ -332,7 +453,18 @@ export function PlatformEditModal({
                                     }}
                                     className="mt-1"
                                     placeholder="100000"
+                                    disabled={
+                                      platform.followers !== undefined && 
+                                      platform.followers !== null && 
+                                      platform.followersUpdated
+                                    }
                                   />
+                                  {platform.followers !== undefined && platform.followers !== null && platform.followersUpdated && (
+                                    <p className="mt-1 text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                                      <AlertCircle size={12} />
+                                      Bu platform için takipçi sayısı daha önce güncellenmiş. Manipülasyonu önlemek için tekrar güncelleyemezsiniz.
+                                    </p>
+                                  )}
                                 </div>
                                 <Button
                                   size="sm"
@@ -346,7 +478,7 @@ export function PlatformEditModal({
                             ) : (
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                  <div className="text-purple-600 dark:text-purple-400">
+                                  <div className="text-[#08afd5] dark:text-[#7ce7ff]">
                                     {platformIcons[platform.id] || <Instagram size={20} />}
                                   </div>
                                   <div>
@@ -408,15 +540,21 @@ export function PlatformEditModal({
                           <SelectTrigger className="mt-1">
                             <SelectValue placeholder="Platform seçin" />
                           </SelectTrigger>
-                          <SelectContent>
-                            {getAvailablePlatforms().map((platform) => (
-                              <SelectItem key={platform.id} value={platform.id}>
-                                <div className="flex items-center gap-2">
-                                  {platform.icon}
-                                  {platform.label}
-                                </div>
+                          <SelectContent className="z-[70]">
+                            {getAvailablePlatforms().length === 0 ? (
+                              <SelectItem value="no-platform" disabled>
+                                Tüm platformlar eklenmiş
                               </SelectItem>
-                            ))}
+                            ) : (
+                              getAvailablePlatforms().map((platform) => (
+                                <SelectItem key={platform.id} value={platform.id}>
+                                  <div className="flex items-center gap-2">
+                                    {platform.icon}
+                                    {platform.label}
+                                  </div>
+                                </SelectItem>
+                              ))
+                            )}
                           </SelectContent>
                         </Select>
                       </div>
@@ -486,3 +624,6 @@ export function PlatformEditModal({
     </AnimatePresence>
   );
 }
+
+
+

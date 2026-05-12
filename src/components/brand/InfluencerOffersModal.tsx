@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     X,
     Search,
     Filter,
+    BrainCircuit,
     Instagram,
     Youtube,
     Users,
@@ -13,15 +14,17 @@ import {
     XCircle,
     ChevronDown,
     User,
-    DollarSign,
+    Banknote,
     Tag,
     Link2,
     Copy,
     Check,
+    Bookmark,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import {
     Select,
@@ -31,17 +34,25 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { getAllInfluencers, InfluencerData } from '@/services/firebaseAuthService';
-import { createOffer, getOffersByCampaign, FirebaseOffer } from '@/services/firebaseOfferService';
-import { FirebaseCampaign } from '@/services/firebaseCampaignService';
+import {
+    createOffer,
+    getOffersByCampaign,
+    FirebaseOffer,
+} from '@/services/firebaseOfferService';
+import { FirebaseCampaign, updateCampaignSavedInfluencers } from '@/services/firebaseCampaignService';
 import { getInfluencerProfile } from '@/services/firebaseInfluencerService';
 import { createTrackingLink, getTrackingLinkByOfferId, TrackingLink } from '@/services/trackingLinkService';
 import { useToast } from '@/hooks/use-toast';
+import { analyzeCampaignInfluencerMatches, CampaignInfluencerMatch } from '@/services/aiMatchingService';
+import { formatContentLinesSummary, hasContentLines } from '@/lib/campaignContentLines';
 
 interface InfluencerOffersModalProps {
     isOpen: boolean;
     onClose: () => void;
     campaign: FirebaseCampaign;
     brandId: string;
+    initialSelectedInfluencerId?: string | null;
+    canOperate?: boolean;
 }
 
 // TikTok icon
@@ -66,6 +77,8 @@ export const InfluencerOffersModal: React.FC<InfluencerOffersModalProps> = ({
     onClose,
     campaign,
     brandId,
+    initialSelectedInfluencerId,
+    canOperate = true,
 }) => {
     const { toast } = useToast();
     const [influencers, setInfluencers] = useState<InfluencerData[]>([]);
@@ -87,6 +100,14 @@ export const InfluencerOffersModal: React.FC<InfluencerOffersModalProps> = ({
     const [targetUrl, setTargetUrl] = useState<string>('');
     const [trackingLink, setTrackingLink] = useState<{ shortCode: string; trackingUrl: string } | null>(null);
     const [linkCopied, setLinkCopied] = useState(false);
+    const [savedInfluencerIds, setSavedInfluencerIds] = useState<string[]>([]);
+    const [aiAnalyzing, setAiAnalyzing] = useState(false);
+    const [aiAnalysisApplied, setAiAnalysisApplied] = useState(false);
+    const [aiMatchMap, setAiMatchMap] = useState<Record<string, CampaignInfluencerMatch>>({});
+
+    const isLocked = campaign.status === 'tamamlandı' || campaign.status === 'iptal' || !canOperate;
+    /** İzlenebilir link teklif akışı yalnızca paylaşımlı link modelinde; UGC / işbirliği ayrı çalışma modeli. */
+    const isSharedLinkCampaign = campaign.campaignModel === 'shared_link';
 
     // Tüm kategorileri topla
     const allCategories = React.useMemo(() => {
@@ -101,9 +122,16 @@ export const InfluencerOffersModal: React.FC<InfluencerOffersModalProps> = ({
 
     useEffect(() => {
         if (isOpen) {
+            setAiAnalysisApplied(false);
+            setAiMatchMap({});
             loadData();
+            setSavedInfluencerIds(campaign.savedInfluencers || []);
+            if (initialSelectedInfluencerId) {
+                const candidate = influencers.find((i) => i.id === initialSelectedInfluencerId);
+                if (candidate) setSelectedInfluencer(candidate);
+            }
         }
-    }, [isOpen, campaign.id]);
+    }, [isOpen, campaign.id, initialSelectedInfluencerId]);
 
     const loadData = async () => {
         try {
@@ -121,7 +149,15 @@ export const InfluencerOffersModal: React.FC<InfluencerOffersModalProps> = ({
             );
 
             setInfluencers(approvedInfluencers);
-            setExistingOffers(offersData);
+            const outgoingOffers = offersData.filter(
+                (offer) => offer.offerKind !== 'incoming_campaign' && offer.sourceType !== 'influencer'
+            );
+            setExistingOffers(outgoingOffers);
+
+            if (initialSelectedInfluencerId) {
+                const candidate = approvedInfluencers.find((i) => i.id === initialSelectedInfluencerId);
+                if (candidate) setSelectedInfluencer(candidate);
+            }
 
             // Profil fotoğraflarını yükle
             const profilePromises = approvedInfluencers.map(async (inf) => {
@@ -145,6 +181,7 @@ export const InfluencerOffersModal: React.FC<InfluencerOffersModalProps> = ({
                 profilesMap[p.id] = { profilePhotoURL: p.profilePhotoURL };
             });
             setInfluencerProfiles(profilesMap);
+
         } catch (error) {
             console.error('Veri yükleme hatası:', error);
             toast({
@@ -160,6 +197,25 @@ export const InfluencerOffersModal: React.FC<InfluencerOffersModalProps> = ({
     // Influencer'ın teklif durumunu kontrol et
     const getOfferStatus = (influencerId: string): FirebaseOffer | null => {
         return existingOffers.find(offer => offer.influencerId === influencerId) || null;
+    };
+
+    const isSaved = (influencerId: string) => savedInfluencerIds.includes(influencerId);
+
+    const toggleSaveInfluencer = async (influencerId: string) => {
+        const next = isSaved(influencerId)
+            ? savedInfluencerIds.filter((id) => id !== influencerId)
+            : [...savedInfluencerIds, influencerId];
+        setSavedInfluencerIds(next);
+        try {
+            await updateCampaignSavedInfluencers(brandId, campaign.id, next);
+        } catch (error: any) {
+            setSavedInfluencerIds(savedInfluencerIds);
+            toast({
+                title: 'Hata',
+                description: error.message || 'Kaydetme işlemi başarısız.',
+                variant: 'destructive',
+            });
+        }
     };
 
     // Filtreleme
@@ -189,8 +245,59 @@ export const InfluencerOffersModal: React.FC<InfluencerOffersModalProps> = ({
         return searchMatch && categoryMatch && followerMatch && statusMatch;
     });
 
+    const rankedInfluencers = React.useMemo(() => {
+        if (!aiAnalysisApplied) return filteredInfluencers;
+        return [...filteredInfluencers].sort((a, b) => {
+            const aScore = aiMatchMap[a.id]?.score ?? 0;
+            const bScore = aiMatchMap[b.id]?.score ?? 0;
+            return bScore - aScore;
+        });
+    }, [filteredInfluencers, aiAnalysisApplied, aiMatchMap]);
+
+    const runAiAnalysis = () => {
+        if (influencers.length === 0) {
+            toast({
+                title: 'Analiz yapılamadı',
+                description: 'Analiz için uygun influencer bulunamadı.',
+                variant: 'destructive',
+            });
+            return;
+        }
+
+        try {
+            setAiAnalyzing(true);
+            const matches = analyzeCampaignInfluencerMatches(campaign, influencers);
+            const map: Record<string, CampaignInfluencerMatch> = {};
+            matches.forEach((match) => {
+                map[match.influencerId] = match;
+            });
+            setAiMatchMap(map);
+            setAiAnalysisApplied(true);
+            toast({
+                title: 'AI Analizi Hazır',
+                description: 'Influencer listesi eşleşme skoruna göre sıralandı.',
+            });
+        } catch (error: any) {
+            toast({
+                title: 'Analiz hatası',
+                description: error?.message || 'AI analizi sırasında bir hata oluştu.',
+                variant: 'destructive',
+            });
+        } finally {
+            setAiAnalyzing(false);
+        }
+    };
+
     // Teklif gönder
     const handleSendOffer = async () => {
+        if (isLocked) {
+            toast({
+                title: 'Kampanya tamamlandı',
+                description: 'Tamamlanan kampanyalarda teklif gönderilemez.',
+                variant: 'destructive',
+            });
+            return;
+        }
         if (!selectedInfluencer || !offerPrice) {
             toast({
                 title: 'Hata',
@@ -211,8 +318,8 @@ export const InfluencerOffersModal: React.FC<InfluencerOffersModalProps> = ({
                 message: offerMessage || undefined,
             });
 
-            // Eğer target URL varsa, tracking link oluştur
-            if (targetUrl) {
+            // Sadece paylasimli link modelinde ve hedef URL verildiginde tracking link olustur
+            if (isSharedLinkCampaign && targetUrl) {
                 try {
                     const newLink = await createTrackingLink({
                         offerId: newOffer.id,
@@ -242,7 +349,10 @@ export const InfluencerOffersModal: React.FC<InfluencerOffersModalProps> = ({
 
             // Teklifleri yeniden yükle
             const offersData = await getOffersByCampaign(campaign.id);
-            setExistingOffers(offersData);
+            const outgoingOffers = offersData.filter(
+                (offer) => offer.offerKind !== 'incoming_campaign' && offer.sourceType !== 'influencer'
+            );
+            setExistingOffers(outgoingOffers);
 
             // Formu temizle
             setSelectedInfluencer(null);
@@ -269,7 +379,7 @@ export const InfluencerOffersModal: React.FC<InfluencerOffersModalProps> = ({
             return platforms.map((p, idx) => (
                 <div
                     key={idx}
-                    className="flex items-center gap-1 px-2 py-1 rounded-md bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 text-xs"
+                    className="flex items-center gap-1 px-2 py-1 rounded-md bg-[#08afd5]/15 dark:bg-[#08afd5]/20 text-[#08afd5] dark:text-[#6edff3] text-xs"
                 >
                     {platformIcons[p.id.toLowerCase()]}
                     <span>@{p.username}</span>
@@ -338,7 +448,7 @@ export const InfluencerOffersModal: React.FC<InfluencerOffersModalProps> = ({
                                 Influencer'lara Teklif Gönder
                             </h2>
                             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                Kampanya: <span className="font-medium text-purple-600">{campaign.title || campaign.productInfo}</span>
+                                Kampanya: <span className="font-medium text-[#08afd5]">{campaign.title || campaign.productInfo}</span>
                             </p>
                         </div>
                         <Button
@@ -351,7 +461,15 @@ export const InfluencerOffersModal: React.FC<InfluencerOffersModalProps> = ({
                         </Button>
                     </div>
 
-                    <div className="flex h-[calc(90vh-80px)]">
+                    {isLocked && (
+                        <div className="px-6 py-3 border-b border-blue-200/60 dark:border-blue-800/50 bg-blue-50/60 dark:bg-blue-900/20">
+                            <p className="text-sm text-blue-700 dark:text-blue-200">
+                                Bu kampanya tamamlandı veya iptal edildi. Teklif gönderemezsiniz.
+                            </p>
+                        </div>
+                    )}
+
+                    <div className="flex h-[calc(90vh-132px)]">
                         {/* Sol Panel - Influencer Listesi */}
                         <div className="flex-1 border-r border-gray-200 dark:border-gray-800 flex flex-col">
                             {/* Filtreler */}
@@ -413,6 +531,17 @@ export const InfluencerOffersModal: React.FC<InfluencerOffersModalProps> = ({
                                             <SelectItem value="offered">Teklif Yapılmış</SelectItem>
                                         </SelectContent>
                                     </Select>
+
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className={`h-9 rounded-full px-4 border-gray-300 dark:border-gray-700 ${aiAnalysisApplied ? 'text-[#08afd5] dark:text-[#6edff3] border-[#08afd5]/60 dark:border-[#08afd5]/60' : 'text-gray-700 dark:text-gray-200'}`}
+                                        onClick={runAiAnalysis}
+                                        disabled={aiAnalyzing || loading}
+                                    >
+                                        <BrainCircuit size={16} className={`mr-2 ${aiAnalyzing ? 'animate-pulse' : ''}`} />
+                                        {aiAnalyzing ? 'Analiz Ediliyor...' : 'AI Destekli Analiz'}
+                                    </Button>
                                 </div>
                             </div>
 
@@ -420,9 +549,9 @@ export const InfluencerOffersModal: React.FC<InfluencerOffersModalProps> = ({
                             <div className="flex-1 overflow-y-auto p-4">
                                 {loading ? (
                                     <div className="flex items-center justify-center py-20">
-                                        <div className="w-8 h-8 border-4 border-purple-600/30 border-t-purple-600 rounded-full animate-spin" />
+                                        <div className="w-8 h-8 border-4 border-[#08afd5]/30 border-t-[#08afd5] rounded-full animate-spin" />
                                     </div>
-                                ) : filteredInfluencers.length === 0 ? (
+                                ) : rankedInfluencers.length === 0 ? (
                                     <div className="flex flex-col items-center justify-center py-20 text-center">
                                         <Users size={48} className="text-gray-300 dark:text-gray-600 mb-4" />
                                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
@@ -434,20 +563,22 @@ export const InfluencerOffersModal: React.FC<InfluencerOffersModalProps> = ({
                                     </div>
                                 ) : (
                                     <div className="space-y-3">
-                                        {filteredInfluencers.map((influencer) => {
+                                        {rankedInfluencers.map((influencer) => {
                                             const offer = getOfferStatus(influencer.id);
                                             const isSelected = selectedInfluencer?.id === influencer.id;
+                                            const saved = isSaved(influencer.id);
+                                            const aiMatch = aiMatchMap[influencer.id];
 
                                             return (
                                                 <motion.div
                                                     key={influencer.id}
                                                     whileHover={{ scale: 1.01 }}
-                                                    onClick={() => !offer && setSelectedInfluencer(influencer)}
+                                                    onClick={() => !offer && !isLocked && setSelectedInfluencer(influencer)}
                                                     className={`p-4 rounded-xl border transition-all cursor-pointer ${isSelected
-                                                            ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                                                            ? 'border-[#08afd5] bg-[#08afd5]/10 dark:bg-[#08afd5]/15'
                                                             : offer
                                                                 ? 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 cursor-not-allowed'
-                                                                : 'border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-700 bg-white dark:bg-gray-800'
+                                                                : 'border-gray-200 dark:border-gray-700 hover:border-[#08afd5]/60 dark:hover:border-[#08afd5]/60 bg-white dark:bg-gray-800'
                                                         }`}
                                                 >
                                                     <div className="flex items-start justify-between">
@@ -460,7 +591,7 @@ export const InfluencerOffersModal: React.FC<InfluencerOffersModalProps> = ({
                                                                     className="w-12 h-12 rounded-full object-cover border-2 border-gray-200 dark:border-gray-700"
                                                                 />
                                                             ) : (
-                                                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-lg">
+                                                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#08afd5] to-[#e3447c] flex items-center justify-center text-white font-bold text-lg">
                                                                     {influencer.fullName.charAt(0).toUpperCase()}
                                                                 </div>
                                                             )}
@@ -490,7 +621,7 @@ export const InfluencerOffersModal: React.FC<InfluencerOffersModalProps> = ({
                                                                             <Tag size={12} />
                                                                             <span>{influencer.categories.slice(0, 2).join(', ')}</span>
                                                                             {influencer.categories.length > 2 && (
-                                                                                <span className="text-purple-600">+{influencer.categories.length - 2}</span>
+                                                                                <span className="text-[#08afd5]">+{influencer.categories.length - 2}</span>
                                                                             )}
                                                                         </div>
                                                                     )}
@@ -499,10 +630,32 @@ export const InfluencerOffersModal: React.FC<InfluencerOffersModalProps> = ({
                                                         </div>
 
                                                         {/* Sağ taraf - Teklif durumu veya seçim */}
-                                                        <div className="flex items-center gap-2">
-                                                            {offer ? (
-                                                                <div className="flex flex-col items-end gap-1">
-                                                                    {renderOfferBadge(offer)}
+                                                <div className="flex items-center gap-2">
+                                                    {aiAnalysisApplied && aiMatch && (
+                                                        <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                                                            Eşleşme %{aiMatch.score}
+                                                        </Badge>
+                                                    )}
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            toggleSaveInfluencer(influencer.id);
+                                                        }}
+                                                        disabled={isLocked}
+                                                        className={`h-8 w-8 rounded-full ${
+                                                            saved
+                                                                ? 'text-[#08afd5] bg-[#08afd5]/10 dark:bg-[#08afd5]/15'
+                                                                : 'text-gray-500 hover:text-[#08afd5]'
+                                                        }`}
+                                                        title={saved ? 'Kaydedildi' : 'Kaydet'}
+                                                    >
+                                                        <Bookmark size={16} />
+                                                    </Button>
+                                                    {offer ? (
+                                                        <div className="flex flex-col items-end gap-1">
+                                                            {renderOfferBadge(offer)}
                                                                     <span className="text-xs text-gray-500">
                                                                         {new Intl.NumberFormat('tr-TR', {
                                                                             style: 'currency',
@@ -512,7 +665,7 @@ export const InfluencerOffersModal: React.FC<InfluencerOffersModalProps> = ({
                                                                     </span>
                                                                 </div>
                                                             ) : isSelected ? (
-                                                                <Badge className="bg-purple-600 text-white">Seçildi</Badge>
+                                                                <Badge className="bg-[#08afd5] text-white">Seçildi</Badge>
                                                             ) : (
                                                                 <span className="text-xs text-gray-400">Teklif için tıkla</span>
                                                             )}
@@ -562,7 +715,7 @@ export const InfluencerOffersModal: React.FC<InfluencerOffersModalProps> = ({
                                                         className="w-12 h-12 rounded-full object-cover border-2 border-gray-200 dark:border-gray-700"
                                                     />
                                                 ) : (
-                                                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-lg">
+                                                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#08afd5] to-[#e3447c] flex items-center justify-center text-white font-bold text-lg">
                                                         {selectedInfluencer.fullName.charAt(0).toUpperCase()}
                                                     </div>
                                                 )}
@@ -591,7 +744,7 @@ export const InfluencerOffersModal: React.FC<InfluencerOffersModalProps> = ({
                                                 Teklif Tutarı (₺) *
                                             </label>
                                             <div className="relative">
-                                                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                                <Banknote className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                                                 <Input
                                                     type="number"
                                                     placeholder="Örn: 5000"
@@ -623,92 +776,103 @@ export const InfluencerOffersModal: React.FC<InfluencerOffersModalProps> = ({
                                             />
                                         </div>
 
-                                        {/* Tracking Link Bölümü */}
-                                        <div className="p-4 rounded-xl bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800">
-                                            <div className="flex items-center gap-2 mb-3">
-                                                <Link2 className="text-purple-600 dark:text-purple-400" size={18} />
-                                                <label className="text-sm font-semibold text-purple-900 dark:text-purple-100">
-                                                    İzlenebilir Link Oluştur
-                                                </label>
-                                            </div>
-                                            
-                                            {!trackingLink ? (
-                                                <div className="space-y-2">
-                                                    <div>
-                                                        <label className="block text-xs font-medium text-purple-700 dark:text-purple-300 mb-1">
-                                                            Hedef URL (Hepsiburada, Trendyol vb.)
-                                                        </label>
-                                                        <Input
-                                                            type="url"
-                                                            placeholder="https://www.hepsiburada.com/urun123"
-                                                            value={targetUrl}
-                                                            onChange={(e) => setTargetUrl(e.target.value)}
-                                                            className="rounded-lg text-sm"
-                                                        />
-                                                    </div>
-                                                    <p className="text-xs text-purple-600 dark:text-purple-400">
-                                                        Teklif gönderildiğinde bu URL için otomatik olarak izlenebilir link oluşturulacak.
-                                                    </p>
+                                        {isSharedLinkCampaign && (
+                                            <div className="p-4 rounded-xl bg-[#08afd5]/10 dark:bg-[#08afd5]/15 border border-[#08afd5]/30 dark:border-[#08afd5]/35">
+                                                <div className="flex items-center gap-2 mb-3">
+                                                    <Link2 className="text-[#08afd5] dark:text-[#6edff3]" size={18} />
+                                                    <label className="text-sm font-semibold text-[#08afd5] dark:text-[#6edff3]">
+                                                        İzlenebilir Link Oluştur
+                                                    </label>
                                                 </div>
-                                            ) : (
-                                                <div className="space-y-2">
-                                                    <div className="p-3 rounded-lg bg-white dark:bg-gray-800 border border-purple-200 dark:border-purple-700">
-                                                        <div className="flex items-center justify-between gap-2">
-                                                            <div className="flex-1 min-w-0">
-                                                                <p className="text-xs text-purple-600 dark:text-purple-400 mb-1">
-                                                                    İzlenebilir Link
-                                                                </p>
-                                                                <p className="text-sm font-mono text-gray-900 dark:text-white truncate">
-                                                                    {trackingLink.trackingUrl}
-                                                                </p>
-                                                            </div>
-                                                            <Button
-                                                                size="sm"
-                                                                variant="outline"
-                                                                onClick={async () => {
-                                                                    try {
-                                                                        await navigator.clipboard.writeText(trackingLink.trackingUrl);
-                                                                        setLinkCopied(true);
-                                                                        toast({
-                                                                            title: 'Başarılı',
-                                                                            description: 'Link kopyalandı!',
-                                                                        });
-                                                                        setTimeout(() => setLinkCopied(false), 2000);
-                                                                    } catch (error) {
-                                                                        toast({
-                                                                            title: 'Hata',
-                                                                            description: 'Link kopyalanamadı.',
-                                                                            variant: 'destructive',
-                                                                        });
-                                                                    }
-                                                                }}
-                                                                className="flex-shrink-0"
-                                                            >
-                                                                {linkCopied ? (
-                                                                    <Check size={16} />
-                                                                ) : (
-                                                                    <Copy size={16} />
-                                                                )}
-                                                            </Button>
+
+                                                {!trackingLink ? (
+                                                    <div className="space-y-2">
+                                                        <div>
+                                                            <label className="block text-xs font-medium text-[#08afd5] dark:text-[#6edff3] mb-1">
+                                                                Hedef URL (Hepsiburada, Trendyol vb.)
+                                                            </label>
+                                                            <Input
+                                                                type="url"
+                                                                placeholder="https://www.hepsiburada.com/urun123"
+                                                                value={targetUrl}
+                                                                onChange={(e) => setTargetUrl(e.target.value)}
+                                                                className="rounded-lg text-sm"
+                                                            />
                                                         </div>
+                                                        <p className="text-xs text-[#08afd5] dark:text-[#6edff3]">
+                                                            Teklif gönderildiğinde bu URL için otomatik olarak izlenebilir link oluşturulacak.
+                                                        </p>
                                                     </div>
-                                                    <p className="text-xs text-purple-600 dark:text-purple-400">
-                                                        Bu link influencer'a otomatik olarak gönderilecek.
-                                                    </p>
-                                                </div>
-                                            )}
-                                        </div>
+                                                ) : (
+                                                    <div className="space-y-2">
+                                                        <div className="p-3 rounded-lg bg-white dark:bg-gray-800 border border-[#08afd5]/30 dark:border-[#08afd5]/40">
+                                                            <div className="flex items-center justify-between gap-2">
+                                                                <div className="flex-1 min-w-0">
+                                                                    <p className="text-xs text-[#08afd5] dark:text-[#6edff3] mb-1">
+                                                                        İzlenebilir Link
+                                                                    </p>
+                                                                    <p className="text-sm font-mono text-gray-900 dark:text-white truncate">
+                                                                        {trackingLink.trackingUrl}
+                                                                    </p>
+                                                                </div>
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="outline"
+                                                                    onClick={async () => {
+                                                                        try {
+                                                                            await navigator.clipboard.writeText(trackingLink.trackingUrl);
+                                                                            setLinkCopied(true);
+                                                                            toast({
+                                                                                title: 'Başarılı',
+                                                                                description: 'Link kopyalandı!',
+                                                                            });
+                                                                            setTimeout(() => setLinkCopied(false), 2000);
+                                                                        } catch (error) {
+                                                                            toast({
+                                                                                title: 'Hata',
+                                                                                description: 'Link kopyalanamadı.',
+                                                                                variant: 'destructive',
+                                                                            });
+                                                                        }
+                                                                    }}
+                                                                    className="flex-shrink-0"
+                                                                >
+                                                                    {linkCopied ? (
+                                                                        <Check size={16} />
+                                                                    ) : (
+                                                                        <Copy size={16} />
+                                                                    )}
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                        <p className="text-xs text-[#08afd5] dark:text-[#6edff3]">
+                                                            Bu link influencer'a otomatik olarak gönderilecek.
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
 
                                         {/* Kampanya Özeti */}
-                                        <div className="p-4 rounded-xl bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800">
-                                            <h4 className="text-sm font-medium text-purple-900 dark:text-purple-100 mb-2">
+                                        <div className="p-4 rounded-xl bg-[#08afd5]/10 dark:bg-[#08afd5]/15 border border-[#08afd5]/30 dark:border-[#08afd5]/35">
+                                            <h4 className="text-sm font-medium text-[#08afd5] dark:text-[#6edff3] mb-2">
                                                 Kampanya Özeti
                                             </h4>
-                                            <div className="space-y-1 text-sm text-purple-700 dark:text-purple-300">
-                                                <p>• Platformlar: {campaign.platforms.join(', ')}</p>
-                                                <p>• İçerik: {campaign.contentFormats.join(', ')}</p>
+                                            <div className="space-y-1 text-sm text-[#08afd5] dark:text-[#6edff3]">
+                                                <p>
+                                                  Platformlar:{' '}
+                                                  {(campaign.platforms || []).length > 0
+                                                    ? (campaign.platforms || []).join(', ')
+                                                    : '—'}
+                                                </p>
+                                                <p>
+                                                  İçerik:{' '}
+                                                  {hasContentLines(campaign)
+                                                    ? formatContentLinesSummary(campaign)
+                                                    : (campaign.contentFormats || []).join(', ') || '—'}
+                                                </p>
                                                 {campaign.duration.period && (
-                                                    <p>• Süre: {campaign.duration.period}</p>
+                                                    <p>€¢ Süre: {campaign.duration.period}</p>
                                                 )}
                                             </div>
                                         </div>
@@ -731,8 +895,8 @@ export const InfluencerOffersModal: React.FC<InfluencerOffersModalProps> = ({
                                 <div className="p-4 border-t border-gray-200 dark:border-gray-800">
                                     <Button
                                         onClick={handleSendOffer}
-                                        disabled={!offerPrice || sendingOffer}
-                                        className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-xl py-3 flex items-center justify-center gap-2"
+                                        disabled={isLocked || !offerPrice || sendingOffer}
+                                        className="w-full brand-btn-primary text-white rounded-xl py-3 flex items-center justify-center gap-2"
                                     >
                                         {sendingOffer ? (
                                             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -752,3 +916,6 @@ export const InfluencerOffersModal: React.FC<InfluencerOffersModalProps> = ({
         </AnimatePresence>
     );
 };
+
+
+

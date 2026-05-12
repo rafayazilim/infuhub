@@ -1,0 +1,23 @@
+RewriteEngine On
+RewriteBase /
+
+# 🔥 1. HER ŞEYİ HTTPS'E ZORLA (EN ÜSTTE OLACAK)
+RewriteCond %{HTTPS} !=on
+RewriteRule ^ https://infuhub.ai%{REQUEST_URI} [L,R=301]
+
+# 🔥 2. www -> non-www
+RewriteCond %{HTTP_HOST} ^www\.infuhub\.ai$ [NC]
+RewriteRule ^ https://infuhub.ai%{REQUEST_URI} [L,R=301]
+
+# 🔥 3. eski domain -> yeni domain
+RewriteCond %{HTTP_HOST} ^(www\.)?infuhub\.cloud$ [NC]
+RewriteRule ^ https://infuhub.ai%{REQUEST_URI} [L,R=301]
+
+# API ve AUTH isteklerini SPA fallback'e dusurme
+RewriteRule ^(api|auth)(/|$) - [L]
+
+# React SPA fallback
+RewriteRule ^index\.html$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.html [L]

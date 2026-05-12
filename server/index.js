@@ -1,23 +1,125 @@
-const express = require('express');
+﻿const express = require('express');
 const cors = require('cors');
+const rateLimit = require('express-rate-limit');
 const fs = require('fs').promises;
 const path = require('path');
 const multer = require('multer');
 const { generateUniqueId } = require('./utils/idGenerator');
+const { admin } = require('./utils/firebaseClient');
+const adminRoutes = require('./routes/admin');
+const adminPendingEmailRoutes = require('./routes/adminPendingEmail');
+const passwordResetRoutes = require('./routes/passwordReset');
+const registrationVerificationRoutes = require('./routes/registrationVerification');
+const transactionalEventsRoutes = require('./routes/transactionalEvents');
+const { getTrackingBaseUrl } = require('./utils/siteOrigin');
+const { logSmtpConfigurationWarningsOnStartup } = require('./services/mailService');
+
+logSmtpConfigurationWarningsOnStartup();
 
 const app = express();
+
+const corsAllowedOrigins = new Set([
+  'https://infuhub.ai',
+  'https://www.infuhub.ai',
+  'https://infuhub.cloud',
+  'https://www.infuhub.cloud',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:8080',
+  'http://127.0.0.1:8080',
+  'http://localhost:3002',
+  'http://127.0.0.1:3002',
+]);
 const PORT = process.env.PORT || 3002;
 
-// Middleware
-app.use(cors());
+/**
+ * Ters proxy arkasındaki gerçek istemci IP'si için. `true` kullanmayın: express-rate-limit
+ * ERR_ERL_PERMISSIVE_TRUST_PROXY uyarısı verir ve X-Forwarded-For kolayca sahtelenebilir.
+ * Tek katman nginx/Cloudflare: 1. Yerel doğrudan Node: TRUST_PROXY_HOPS=0
+ */
+(() => {
+  const raw = process.env.TRUST_PROXY_HOPS;
+  if (raw === "0" || raw === "false") {
+    app.set("trust proxy", false);
+    return;
+  }
+  const n = raw !== undefined && raw !== "" ? parseInt(raw, 10) : 1;
+  app.set("trust proxy", Number.isFinite(n) && n >= 1 ? n : 1);
+})();
+
+// Middleware — üretim: infuhub.ai; geçiş: infuhub.cloud; geliştirme: localhost
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || corsAllowedOrigins.has(origin)) {
+        return callback(null, true);
+      }
+      callback(null, false);
+    },
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// IP adresini doğru almak için trust proxy
-app.set('trust proxy', true);
+/** Şifre sıfırlama (SMTP kodu + Firebase Admin) — kimlik doğrulaması gerektirmez */
+app.use('/auth', passwordResetRoutes);
+const isPublicRoute = (req) => {
+  if (req.method === 'POST' && req.path === '/auth/login') return true;
+  /** /api altında aynı router: hosting sadece /api -> Node proxy edebilir */
+  if (req.method === 'POST' && req.path.startsWith('/auth/forgot-password')) return true;
+  if (req.method === 'POST' && req.path === '/brands/register') return true;
+  if (req.method === 'POST' && req.path === '/influencers/register') return true;
+  if (req.method === 'GET' && req.path.startsWith('/tracking-links/offer/')) return true;
+  /** Kayıt e-posta doğrulama (kod) — Bearer gerekmez */
+  if (
+    req.method === 'POST' &&
+    (req.path?.includes('/auth/register/verify-email') || String(req.originalUrl || '').includes('/auth/register/verify-email'))
+  ) {
+    return true;
+  }
+  return false;
+};
 
-// Dosya yükleme ayarları
+const verifyFirebaseAuth = async (req, res, next) => {
+  if (isPublicRoute(req)) return next();
+
+  const authHeader = req.headers.authorization || '';
+  if (!authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ success: false, message: 'Yetkisiz erişim' });
+  }
+
+  try {
+    const token = authHeader.substring('Bearer '.length);
+    req.user = await admin.auth().verifyIdToken(token);
+    return next();
+  } catch (error) {
+    return res.status(401).json({ success: false, message: 'Geçersiz token' });
+  }
+};
+
+// /api altındaki endpointler için auth doğrulama
+app.use('/api', verifyFirebaseAuth);
+app.use('/api/auth', passwordResetRoutes);
+app.use('/api/auth', registrationVerificationRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/admin', adminPendingEmailRoutes);
+app.use('/api/transactional-events', transactionalEventsRoutes);
+
+// Login brute-force korumasÄ±
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 dakika
+  max: 20, // 15 dakika iÃ§inde max 20 deneme
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Çok fazla deneme. Lütfen 15 dakika sonra tekrar deneyin!',
+  },
+});
+
+// Dosya yÃ¼kleme ayarlarÄ±
 const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
     const uploadsDir = path.join(__dirname, 'uploads');
@@ -42,12 +144,12 @@ const upload = multer({
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Sadece JPG, JPEG ve PNG dosyaları yüklenebilir!'), false);
+      cb(new Error('Sadece JPG, JPEG ve PNG dosyalarÄ± yÃ¼klenebilir!'), false);
     }
   }
 });
 
-// JSON dosyalarının yolları
+// JSON dosyalarÄ±nÄ±n yollarÄ±
 const BRANDS_FILE = path.join(__dirname, 'data', 'brands.json');
 const INFLUENCERS_FILE = path.join(__dirname, 'data', 'influencers.json');
 const CAMPAIGNS_FILE = path.join(__dirname, 'data', 'campaigns.json');
@@ -57,7 +159,7 @@ const MESSAGES_FILE = path.join(__dirname, 'data', 'messages.json');
 const CONVERSATIONS_FILE = path.join(__dirname, 'data', 'conversations.json');
 const NOTIFICATIONS_FILE = path.join(__dirname, 'data', 'notifications.json');
 
-// JSON dosyasını okuma fonksiyonu
+// JSON dosyasÄ±nÄ± okuma fonksiyonu
 async function readJSONFile(filePath) {
   try {
     await fs.mkdir(path.dirname(filePath), { recursive: true });
@@ -71,7 +173,7 @@ async function readJSONFile(filePath) {
   }
 }
 
-// JSON dosyasına yazma fonksiyonu
+// JSON dosyasÄ±na yazma fonksiyonu
 async function writeJSONFile(filePath, data) {
   await fs.mkdir(path.dirname(filePath), { recursive: true });
   await fs.writeFile(filePath, JSON.stringify(data, null, 2), 'utf8');
@@ -79,18 +181,18 @@ async function writeJSONFile(filePath, data) {
 
 // Ana sayfa
 app.get('/', (req, res) => {
-  res.json({ message: 'İNFUHUB API Çalışıyor!' });
+  res.json({ message: 'Ä°NFUHUB API Ã‡alÄ±ÅŸÄ±yor!' });
 });
 
 // Login endpoint
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', loginLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ 
         success: false, 
-        message: 'E-posta ve şifre gerekli!' 
+        message: 'E-posta ve ÅŸifre gerekli!' 
       });
     }
 
@@ -99,16 +201,16 @@ app.post('/api/auth/login', async (req, res) => {
     const brand = brands.find(b => b.email === email && b.password === password);
 
     if (brand) {
-      if (brand.status !== 'onaylandı') {
+      if (brand.status !== 'onayland\u0131') {
         return res.status(403).json({ 
           success: false, 
-          message: 'Hesabınız henüz onaylanmamış!' 
+          message: 'HesabÄ±nÄ±z henÃ¼z onaylanmamÄ±ÅŸ!' 
         });
       }
 
       return res.json({ 
         success: true, 
-        message: 'Giriş başarılı!',
+        message: 'GiriÅŸ baÅŸarÄ±lÄ±!',
         user: {
           id: brand.id,
           email: brand.email,
@@ -126,16 +228,16 @@ app.post('/api/auth/login', async (req, res) => {
     const influencer = influencers.find(i => i.email === email && i.password === password);
 
     if (influencer) {
-      if (influencer.status !== 'onaylandı') {
+      if (influencer.status !== 'onayland\u0131') {
         return res.status(403).json({ 
           success: false, 
-          message: 'Hesabınız henüz onaylanmamış!' 
+          message: 'HesabÄ±nÄ±z henÃ¼z onaylanmamÄ±ÅŸ!' 
         });
       }
 
       return res.json({ 
         success: true, 
-        message: 'Giriş başarılı!',
+        message: 'GiriÅŸ baÅŸarÄ±lÄ±!',
         user: {
           id: influencer.id,
           email: influencer.email,
@@ -150,19 +252,19 @@ app.post('/api/auth/login', async (req, res) => {
 
     return res.status(401).json({ 
       success: false, 
-      message: 'E-posta veya şifre hatalı!' 
+      message: 'E-posta veya ÅŸifre hatalÄ±!' 
     });
   } catch (error) {
-    console.error('Login hatası:', error);
+    console.error('Login hatasÄ±:', error);
     res.status(500).json({ 
       success: false, 
-      message: 'Sunucu hatası oluştu!' 
+      message: 'Sunucu hatasÄ± oluÅŸtu!' 
     });
   }
 });
 
 
-// Marka kaydı
+// Marka kaydÄ±
 app.post('/api/brands/register', async (req, res) => {
   try {
     const { brandName, email, password, industry, budget, website } = req.body;
@@ -171,18 +273,18 @@ app.post('/api/brands/register', async (req, res) => {
     if (!brandName || !email || !password || !industry) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Gerekli alanları doldurun!' 
+        message: 'Gerekli alanlarÄ± doldurun!' 
       });
     }
 
     const brands = await readJSONFile(BRANDS_FILE);
 
-    // Email kontrolü
+    // Email kontrolÃ¼
     const emailExists = brands.some(brand => brand.email === email);
     if (emailExists) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Bu e-posta adresi zaten kayıtlı!' 
+        message: 'Bu e-posta adresi zaten kayÄ±tlÄ±!' 
       });
     }
 
@@ -190,7 +292,7 @@ app.post('/api/brands/register', async (req, res) => {
       id: generateUniqueId(),
       brandName,
       email,
-      password, // Gerçek uygulamada hashlenmelidir!
+      password, // GerÃ§ek uygulamada hashlenmelidir!
       industry,
       budget,
       website: website || '',
@@ -203,19 +305,19 @@ app.post('/api/brands/register', async (req, res) => {
 
     res.status(201).json({ 
       success: true, 
-      message: 'Marka kaydı başarıyla oluşturuldu!',
+      message: 'Marka kaydÄ± baÅŸarÄ±yla oluÅŸturuldu!',
       data: { id: newBrand.id, email: newBrand.email }
     });
   } catch (error) {
-    console.error('Marka kaydı hatası:', error);
+    console.error('Marka kaydÄ± hatasÄ±:', error);
     res.status(500).json({ 
       success: false, 
-      message: 'Sunucu hatası oluştu!' 
+      message: 'Sunucu hatasÄ± oluÅŸtu!' 
     });
   }
 });
 
-// Influencer kaydı
+// Influencer kaydÄ±
 app.post('/api/influencers/register', upload.single('verificationPhoto'), async (req, res) => {
   try {
     const { fullName, email, password, platforms, followerRange, categories } = req.body;
@@ -224,25 +326,25 @@ app.post('/api/influencers/register', upload.single('verificationPhoto'), async 
     if (!fullName || !email || !password || !platforms || !followerRange || !categories) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Gerekli alanları doldurun!' 
+        message: 'Gerekli alanlarÄ± doldurun!' 
       });
     }
 
     if (!req.file) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Doğrulama fotoğrafı yüklemeniz gerekiyor!' 
+        message: 'DoÄŸrulama fotoÄŸrafÄ± yÃ¼klemeniz gerekiyor!' 
       });
     }
 
     const influencers = await readJSONFile(INFLUENCERS_FILE);
 
-    // Email kontrolü
+    // Email kontrolÃ¼
     const emailExists = influencers.some(inf => inf.email === email);
     if (emailExists) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Bu e-posta adresi zaten kayıtlı!' 
+        message: 'Bu e-posta adresi zaten kayÄ±tlÄ±!' 
       });
     }
 
@@ -250,7 +352,7 @@ app.post('/api/influencers/register', upload.single('verificationPhoto'), async 
       id: generateUniqueId(),
       fullName,
       email,
-      password, // Gerçek uygulamada hashlenmelidir!
+      password, // GerÃ§ek uygulamada hashlenmelidir!
       platforms: JSON.parse(platforms),
       followerRange,
       categories: JSON.parse(categories),
@@ -264,50 +366,50 @@ app.post('/api/influencers/register', upload.single('verificationPhoto'), async 
 
     res.status(201).json({ 
       success: true, 
-      message: 'Influencer kaydı başarıyla oluşturuldu!',
+      message: 'Influencer kaydÄ± baÅŸarÄ±yla oluÅŸturuldu!',
       data: { id: newInfluencer.id, email: newInfluencer.email }
     });
   } catch (error) {
-    console.error('Influencer kaydı hatası:', error);
+    console.error('Influencer kaydÄ± hatasÄ±:', error);
     res.status(500).json({ 
       success: false, 
-      message: 'Sunucu hatası oluştu!' 
+      message: 'Sunucu hatasÄ± oluÅŸtu!' 
     });
   }
 });
 
-// Tüm markaları getir
+// TÃ¼m markalarÄ± getir
 app.get('/api/brands', async (req, res) => {
   try {
     const brands = await readJSONFile(BRANDS_FILE);
     res.json({ success: true, data: brands });
   } catch (error) {
-    console.error('Markalar getirme hatası:', error);
-    res.status(500).json({ success: false, message: 'Sunucu hatası!' });
+    console.error('Markalar getirme hatasÄ±:', error);
+    res.status(500).json({ success: false, message: 'Sunucu hatasÄ±!' });
   }
 });
 
-// Tüm influencer'ları getir
+// TÃ¼m influencer'larÄ± getir
 app.get('/api/influencers', async (req, res) => {
   try {
     const influencers = await readJSONFile(INFLUENCERS_FILE);
     res.json({ success: true, data: influencers });
   } catch (error) {
-    console.error('Influencer\'lar getirme hatası:', error);
-    res.status(500).json({ success: false, message: 'Sunucu hatası!' });
+    console.error('Influencer\'lar getirme hatasÄ±:', error);
+    res.status(500).json({ success: false, message: 'Sunucu hatasÄ±!' });
   }
 });
 
-// Marka durumunu güncelle
+// Marka durumunu gÃ¼ncelle
 app.patch('/api/brands/:id/status', async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
 
-    if (!['beklemede', 'onaylandı', 'reddedildi'].includes(status)) {
+    if (!['beklemede', 'onayland\u0131', 'reddedildi'].includes(status)) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Geçersiz durum!' 
+        message: 'GeÃ§ersiz durum!' 
       });
     }
 
@@ -317,7 +419,7 @@ app.patch('/api/brands/:id/status', async (req, res) => {
     if (brandIndex === -1) {
       return res.status(404).json({ 
         success: false, 
-        message: 'Marka bulunamadı!' 
+        message: 'Marka bulunamadÄ±!' 
       });
     }
 
@@ -327,25 +429,25 @@ app.patch('/api/brands/:id/status', async (req, res) => {
 
     res.json({ 
       success: true, 
-      message: 'Durum güncellendi!',
+      message: 'Durum gÃ¼ncellendi!',
       data: brands[brandIndex]
     });
   } catch (error) {
-    console.error('Durum güncelleme hatası:', error);
-    res.status(500).json({ success: false, message: 'Sunucu hatası!' });
+    console.error('Durum gÃ¼ncelleme hatasÄ±:', error);
+    res.status(500).json({ success: false, message: 'Sunucu hatasÄ±!' });
   }
 });
 
-// Influencer durumunu güncelle
+// Influencer durumunu gÃ¼ncelle
 app.patch('/api/influencers/:id/status', async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
 
-    if (!['beklemede', 'onaylandı', 'reddedildi'].includes(status)) {
+    if (!['beklemede', 'onayland\u0131', 'reddedildi'].includes(status)) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Geçersiz durum!' 
+        message: 'GeÃ§ersiz durum!' 
       });
     }
 
@@ -355,7 +457,7 @@ app.patch('/api/influencers/:id/status', async (req, res) => {
     if (influencerIndex === -1) {
       return res.status(404).json({ 
         success: false, 
-        message: 'Influencer bulunamadı!' 
+        message: 'Influencer bulunamadÄ±!' 
       });
     }
 
@@ -365,12 +467,12 @@ app.patch('/api/influencers/:id/status', async (req, res) => {
 
     res.json({ 
       success: true, 
-      message: 'Durum güncellendi!',
+      message: 'Durum gÃ¼ncellendi!',
       data: influencers[influencerIndex]
     });
   } catch (error) {
-    console.error('Durum güncelleme hatası:', error);
-    res.status(500).json({ success: false, message: 'Sunucu hatası!' });
+    console.error('Durum gÃ¼ncelleme hatasÄ±:', error);
+    res.status(500).json({ success: false, message: 'Sunucu hatasÄ±!' });
   }
 });
 
@@ -379,7 +481,7 @@ app.patch('/api/influencers/:id/status', async (req, res) => {
 const { createTrackingLink, getTrackingLink, getTrackingLinkByOfferId } = require('./services/trackingLinkService');
 const { recordClick, getClickCountByOfferId } = require('./services/clickService');
 
-// Tracking link oluştur
+// Tracking link oluÅŸtur
 app.post('/api/tracking-links', async (req, res) => {
   try {
     const { offerId, targetUrl, platform = 'instagram' } = req.body;
@@ -397,7 +499,7 @@ app.post('/api/tracking-links', async (req, res) => {
     } catch {
       return res.status(400).json({
         success: false,
-        message: 'Geçerli bir URL girin!',
+        message: 'GeÃ§erli bir URL girin!',
       });
     }
 
@@ -405,14 +507,14 @@ app.post('/api/tracking-links', async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Tracking link başarıyla oluşturuldu!',
+      message: 'Tracking link baÅŸarÄ±yla oluÅŸturuldu!',
       data: result,
     });
   } catch (error) {
-    console.error('Tracking link oluşturma hatası:', error);
+    console.error('Tracking link oluÅŸturma hatasÄ±:', error);
     res.status(500).json({
       success: false,
-      message: error.message || 'Tracking link oluşturulurken bir hata oluştu!',
+      message: error.message || 'Tracking link oluÅŸturulurken bir hata oluÅŸtu!',
     });
   }
 });
@@ -424,17 +526,18 @@ app.get('/api/tracking-links/offer/:offerId', async (req, res) => {
     const trackingLink = await getTrackingLinkByOfferId(offerId);
 
     if (!trackingLink) {
-      return res.status(404).json({
-        success: false,
-        message: 'Tracking link bulunamadı!',
+      return res.json({
+        success: true,
+        data: null,
+        message: 'Tracking link bulunamadı',
       });
     }
 
-    // Click sayısını da ekle
+    // Click sayÄ±sÄ±nÄ± da ekle
     const clickCount = await getClickCountByOfferId(offerId);
     
     // Tracking URL'i ekle
-    const baseUrl = process.env.BASE_TRACKING_DOMAIN || 'http://localhost:3002';
+    const baseUrl = getTrackingBaseUrl();
     const trackingUrl = `${baseUrl}/c/${trackingLink.shortCode}`;
 
     res.json({
@@ -446,15 +549,15 @@ app.get('/api/tracking-links/offer/:offerId', async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Tracking link getirme hatası:', error);
+    console.error('Tracking link getirme hatasÄ±:', error);
     res.status(500).json({
       success: false,
-      message: error.message || 'Tracking link getirilirken bir hata oluştu!',
+      message: error.message || 'Tracking link getirilirken bir hata oluÅŸtu!',
     });
   }
 });
 
-// Redirect endpoint - Tracking link'e tıklama
+// Redirect endpoint - Tracking link'e tÄ±klama
 app.get('/c/:shortCode', async (req, res) => {
   try {
     const { shortCode } = req.params;
@@ -463,12 +566,12 @@ app.get('/c/:shortCode', async (req, res) => {
     const trackingLink = await getTrackingLink(shortCode);
 
     if (!trackingLink) {
-      return res.status(404).send('Link bulunamadı');
+      return res.status(404).send('Link bulunamadÄ±');
     }
 
-    // Link aktif değilse
+    // Link aktif deÄŸilse
     if (!trackingLink.isActive) {
-      return res.status(404).send('Link aktif değil');
+      return res.status(404).send('Link aktif deÄŸil');
     }
 
     // Click bilgilerini topla
@@ -476,32 +579,28 @@ app.get('/c/:shortCode', async (req, res) => {
     const userAgent = req.headers['user-agent'] || 'Unknown';
     const referrer = req.headers.referer || req.headers.referrer || '';
 
-    // Click kaydı oluştur (async - blocking olmadan)
-    // Artık clicks tracking_links altında tutuluyor
+    // Click kaydÄ± oluÅŸtur (async - blocking olmadan)
+    // ArtÄ±k clicks tracking_links altÄ±nda tutuluyor
     recordClick(shortCode, {
       source: trackingLink.platform,
       ip,
       userAgent,
       referrer,
     }).catch((error) => {
-      console.error('Click kaydı hatası (non-blocking):', error);
+      console.error('Click kaydÄ± hatasÄ± (non-blocking):', error);
     });
 
     // 302 Redirect
     res.redirect(302, trackingLink.targetUrl);
   } catch (error) {
-    console.error('Redirect hatası:', error);
-    res.status(500).send('Bir hata oluştu');
+    console.error('Redirect hatasÄ±:', error);
+    res.status(500).send('Bir hata oluÅŸtu');
   }
-});
-
-app.listen(PORT, () => {
-  console.log(`🚀 İNFUHUB Backend ${PORT} portunda çalışıyor!`);
 });
 
 // ==================== KAMPANYA ENDPOINTS ====================
 
-// Kampanya oluştur
+// Kampanya oluÅŸtur
 app.post('/api/campaigns/create', async (req, res) => {
   try {
     const { brandId, productInfo, duration, targetAudience, budget, platforms, contentFormats } = req.body;
@@ -510,7 +609,7 @@ app.post('/api/campaigns/create', async (req, res) => {
     if (!brandId || !productInfo?.trim() || !duration || !targetAudience?.trim() || !budget) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Gerekli alanları doldurun!' 
+        message: 'Gerekli alanlarÄ± doldurun!' 
       });
     }
 
@@ -518,7 +617,7 @@ app.post('/api/campaigns/create', async (req, res) => {
     if (budget <= 0) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Bütçe 0\'dan büyük olmalıdır!' 
+        message: 'BÃ¼tÃ§e 0\'dan bÃ¼yÃ¼k olmalÄ±dÄ±r!' 
       });
     }
 
@@ -526,7 +625,7 @@ app.post('/api/campaigns/create', async (req, res) => {
     if (!platforms || !Array.isArray(platforms) || platforms.length === 0) {
       return res.status(400).json({ 
         success: false, 
-        message: 'En az bir platform seçmelisiniz!' 
+        message: 'En az bir platform seÃ§melisiniz!' 
       });
     }
 
@@ -534,7 +633,7 @@ app.post('/api/campaigns/create', async (req, res) => {
     if (!contentFormats || !Array.isArray(contentFormats) || contentFormats.length === 0) {
       return res.status(400).json({ 
         success: false, 
-        message: 'En az bir içerik formatı seçmelisiniz!' 
+        message: 'En az bir iÃ§erik formatÄ± seÃ§melisiniz!' 
       });
     }
 
@@ -559,16 +658,16 @@ app.post('/api/campaigns/create', async (req, res) => {
 
     res.status(201).json({ 
       success: true, 
-      message: 'Kampanya başarıyla oluşturuldu!',
+      message: 'Kampanya baÅŸarÄ±yla oluÅŸturuldu!',
       data: newCampaign
     });
   } catch (error) {
-    console.error('Kampanya oluşturma hatası:', error);
-    res.status(500).json({ success: false, message: 'Sunucu hatası!' });
+    console.error('Kampanya oluÅŸturma hatasÄ±:', error);
+    res.status(500).json({ success: false, message: 'Sunucu hatasÄ±!' });
   }
 });
 
-// Marka kampanyalarını getir
+// Marka kampanyalarÄ±nÄ± getir
 app.get('/api/campaigns/brand/:brandId', async (req, res) => {
   try {
     const { brandId } = req.params;
@@ -577,12 +676,12 @@ app.get('/api/campaigns/brand/:brandId', async (req, res) => {
     
     res.json({ success: true, data: brandCampaigns });
   } catch (error) {
-    console.error('Kampanyalar getirme hatası:', error);
-    res.status(500).json({ success: false, message: 'Sunucu hatası!' });
+    console.error('Kampanyalar getirme hatasÄ±:', error);
+    res.status(500).json({ success: false, message: 'Sunucu hatasÄ±!' });
   }
 });
 
-// Kampanya detayı getir
+// Kampanya detayÄ± getir
 app.get('/api/campaigns/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -592,18 +691,18 @@ app.get('/api/campaigns/:id', async (req, res) => {
     if (!campaign) {
       return res.status(404).json({ 
         success: false, 
-        message: 'Kampanya bulunamadı!' 
+        message: 'Kampanya bulunamadÄ±!' 
       });
     }
 
     res.json({ success: true, data: campaign });
   } catch (error) {
-    console.error('Kampanya getirme hatası:', error);
-    res.status(500).json({ success: false, message: 'Sunucu hatası!' });
+    console.error('Kampanya getirme hatasÄ±:', error);
+    res.status(500).json({ success: false, message: 'Sunucu hatasÄ±!' });
   }
 });
 
-// Kampanya güncelle
+// Kampanya gÃ¼ncelle
 app.put('/api/campaigns/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -615,7 +714,7 @@ app.put('/api/campaigns/:id', async (req, res) => {
     if (campaignIndex === -1) {
       return res.status(404).json({ 
         success: false, 
-        message: 'Kampanya bulunamadı!' 
+        message: 'Kampanya bulunamadÄ±!' 
       });
     }
 
@@ -637,12 +736,12 @@ app.put('/api/campaigns/:id', async (req, res) => {
 
     res.json({ 
       success: true, 
-      message: 'Kampanya güncellendi!',
+      message: 'Kampanya gÃ¼ncellendi!',
       data: campaigns[campaignIndex]
     });
   } catch (error) {
-    console.error('Kampanya güncelleme hatası:', error);
-    res.status(500).json({ success: false, message: 'Sunucu hatası!' });
+    console.error('Kampanya gÃ¼ncelleme hatasÄ±:', error);
+    res.status(500).json({ success: false, message: 'Sunucu hatasÄ±!' });
   }
 });
 
@@ -658,7 +757,7 @@ app.delete('/api/campaigns/:id', async (req, res) => {
     if (campaignIndex === -1) {
       return res.status(404).json({ 
         success: false, 
-        message: 'Kampanya bulunamadı!' 
+        message: 'Kampanya bulunamadÄ±!' 
       });
     }
 
@@ -685,21 +784,21 @@ app.delete('/api/campaigns/:id', async (req, res) => {
       data: campaigns[campaignIndex]
     });
   } catch (error) {
-    console.error('Kampanya silme hatası:', error);
-    res.status(500).json({ success: false, message: 'Sunucu hatası!' });
+    console.error('Kampanya silme hatasÄ±:', error);
+    res.status(500).json({ success: false, message: 'Sunucu hatasÄ±!' });
   }
 });
 
-// Kampanya durumunu güncelle
+// Kampanya durumunu gÃ¼ncelle
 app.patch('/api/campaigns/:id/status', async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
 
-    if (!['aktif', 'tamamlandı', 'iptal', 'taslak'].includes(status)) {
+    if (!['aktif', 'tamamlandÄ±', 'iptal', 'taslak'].includes(status)) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Geçersiz durum!' 
+        message: 'GeÃ§ersiz durum!' 
       });
     }
 
@@ -709,7 +808,7 @@ app.patch('/api/campaigns/:id/status', async (req, res) => {
     if (campaignIndex === -1) {
       return res.status(404).json({ 
         success: false, 
-        message: 'Kampanya bulunamadı!' 
+        message: 'Kampanya bulunamadÄ±!' 
       });
     }
 
@@ -719,16 +818,16 @@ app.patch('/api/campaigns/:id/status', async (req, res) => {
 
     res.json({ 
       success: true, 
-      message: 'Kampanya durumu güncellendi!',
+      message: 'Kampanya durumu gÃ¼ncellendi!',
       data: campaigns[campaignIndex]
     });
   } catch (error) {
-    console.error('Durum güncelleme hatası:', error);
-    res.status(500).json({ success: false, message: 'Sunucu hatası!' });
+    console.error('Durum gÃ¼ncelleme hatasÄ±:', error);
+    res.status(500).json({ success: false, message: 'Sunucu hatasÄ±!' });
   }
 });
 
-// Kampanya için uygun influencer'ları getir
+// Kampanya iÃ§in uygun influencer'larÄ± getir
 app.get('/api/campaigns/:id/matched-influencers', async (req, res) => {
   try {
     const { id } = req.params;
@@ -740,15 +839,15 @@ app.get('/api/campaigns/:id/matched-influencers', async (req, res) => {
     if (!campaign) {
       return res.status(404).json({ 
         success: false, 
-        message: 'Kampanya bulunamadı!' 
+        message: 'Kampanya bulunamadÄ±!' 
       });
     }
 
-    // Sadece onaylanmış influencer'ları filtrele
+    // Sadece onaylanmÄ±ÅŸ influencer'larÄ± filtrele
     const matchedInfluencers = influencers.filter(inf => {
-      if (inf.status !== 'onaylandı') return false;
+      if (inf.status !== 'onayland\u0131') return false;
       
-      // Platform eşleşmesi kontrolü
+      // Platform eÅŸleÅŸmesi kontrolÃ¼
       if (campaign.platforms && campaign.platforms.length > 0) {
         const hasMatchingPlatform = inf.platforms.some(p => 
           campaign.platforms.includes(p.id)
@@ -756,7 +855,7 @@ app.get('/api/campaigns/:id/matched-influencers', async (req, res) => {
         if (!hasMatchingPlatform) return false;
       }
 
-      // Kategori eşleşmesi kontrolü
+      // Kategori eÅŸleÅŸmesi kontrolÃ¼
       if (campaign.targetAudience && inf.categories) {
         const hasMatchingCategory = inf.categories.some(c => 
           campaign.targetAudience.toLowerCase().includes(c.toLowerCase()) ||
@@ -770,14 +869,14 @@ app.get('/api/campaigns/:id/matched-influencers', async (req, res) => {
 
     res.json({ success: true, data: matchedInfluencers });
   } catch (error) {
-    console.error('Eşleşen influencer\'lar getirme hatası:', error);
-    res.status(500).json({ success: false, message: 'Sunucu hatası!' });
+    console.error('EÅŸleÅŸen influencer\'lar getirme hatasÄ±:', error);
+    res.status(500).json({ success: false, message: 'Sunucu hatasÄ±!' });
   }
 });
 
-// ==================== TEKLİF ENDPOINTS ====================
+// ==================== TEKLÄ°F ENDPOINTS ====================
 
-// Teklif gönder
+// Teklif gÃ¶nder
 app.post('/api/offers/send', async (req, res) => {
   try {
     const { campaignId, brandId, influencerId, price, contentFormat, deliveryDate, campaignLink, notes } = req.body;
@@ -785,7 +884,7 @@ app.post('/api/offers/send', async (req, res) => {
     if (!campaignId || !brandId || !influencerId || !price || !contentFormat || !deliveryDate) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Gerekli alanları doldurun!' 
+        message: 'Gerekli alanlarÄ± doldurun!' 
       });
     }
 
@@ -820,12 +919,12 @@ app.post('/api/offers/send', async (req, res) => {
 
     res.status(201).json({ 
       success: true, 
-      message: 'Teklif başarıyla gönderildi!',
+      message: 'Teklif baÅŸarÄ±yla gÃ¶nderildi!',
       data: newOffer
     });
   } catch (error) {
-    console.error('Teklif gönderme hatası:', error);
-    res.status(500).json({ success: false, message: 'Sunucu hatası!' });
+    console.error('Teklif gÃ¶nderme hatasÄ±:', error);
+    res.status(500).json({ success: false, message: 'Sunucu hatasÄ±!' });
   }
 });
 
@@ -853,12 +952,12 @@ app.get('/api/offers/influencer/:influencerId', async (req, res) => {
 
     res.json({ success: true, data: enrichedOffers });
   } catch (error) {
-    console.error('Teklifler getirme hatası:', error);
-    res.status(500).json({ success: false, message: 'Sunucu hatası!' });
+    console.error('Teklifler getirme hatasÄ±:', error);
+    res.status(500).json({ success: false, message: 'Sunucu hatasÄ±!' });
   }
 });
 
-// Teklif durumunu güncelle (kabul/red)
+// Teklif durumunu gÃ¼ncelle (kabul/red)
 app.patch('/api/offers/:id/status', async (req, res) => {
   try {
     const { id } = req.params;
@@ -867,7 +966,7 @@ app.patch('/api/offers/:id/status', async (req, res) => {
     if (!['beklemede', 'kabul', 'red'].includes(status)) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Geçersiz durum!' 
+        message: 'GeÃ§ersiz durum!' 
       });
     }
 
@@ -877,7 +976,7 @@ app.patch('/api/offers/:id/status', async (req, res) => {
     if (offerIndex === -1) {
       return res.status(404).json({ 
         success: false, 
-        message: 'Teklif bulunamadı!' 
+        message: 'Teklif bulunamadÄ±!' 
       });
     }
 
@@ -898,7 +997,7 @@ app.patch('/api/offers/:id/status', async (req, res) => {
         offer.brandId,
         'brand',
         'offer_response',
-        'Teklif Yanıtı',
+        'Teklif YanÄ±tÄ±',
         notificationMessages[status],
         `/offers/${id}`
       );
@@ -906,16 +1005,16 @@ app.patch('/api/offers/:id/status', async (req, res) => {
 
     res.json({ 
       success: true, 
-      message: 'Teklif durumu güncellendi!',
+      message: 'Teklif durumu gÃ¼ncellendi!',
       data: offers[offerIndex]
     });
   } catch (error) {
-    console.error('Teklif güncelleme hatası:', error);
-    res.status(500).json({ success: false, message: 'Sunucu hatası!' });
+    console.error('Teklif gÃ¼ncelleme hatasÄ±:', error);
+    res.status(500).json({ success: false, message: 'Sunucu hatasÄ±!' });
   }
 });
 
-// Marka'nın gönderdiği teklifleri getir
+// Marka'nÄ±n gÃ¶nderdiÄŸi teklifleri getir
 app.get('/api/offers/brand/:brandId', async (req, res) => {
   try {
     const { brandId } = req.params;
@@ -944,8 +1043,8 @@ app.get('/api/offers/brand/:brandId', async (req, res) => {
 
     res.json({ success: true, data: enrichedOffers });
   } catch (error) {
-    console.error('Teklifler getirme hatası:', error);
-    res.status(500).json({ success: false, message: 'Sunucu hatası!' });
+    console.error('Teklifler getirme hatasÄ±:', error);
+    res.status(500).json({ success: false, message: 'Sunucu hatasÄ±!' });
   }
 });
 
@@ -978,7 +1077,7 @@ app.post('/api/contents/upload', async (req, res) => {
     if (!offerId || !campaignId || !influencerId || !brandId || !type || !url) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Gerekli alanları doldurun!' 
+        message: 'Gerekli alanlarÄ± doldurun!' 
       });
     }
 
@@ -1005,19 +1104,19 @@ app.post('/api/contents/upload', async (req, res) => {
       brandId,
       'brand',
       'content_approval',
-      'Yeni İçerik Onayı',
-      'Bir influencer yeni içerik yükledi.',
+      'Yeni Ä°Ã§erik OnayÄ±',
+      'Bir influencer yeni iÃ§erik yÃ¼kledi.',
       `/content/${newContent.id}`
     );
 
     res.status(201).json({ 
       success: true, 
-      message: 'İçerik başarıyla yüklendi!',
+      message: 'Ä°Ã§erik baÅŸarÄ±yla yÃ¼klendi!',
       data: newContent
     });
   } catch (error) {
-    console.error('İçerik yükleme hatası:', error);
-    res.status(500).json({ success: false, message: 'Sunucu hatası!' });
+    console.error('Ä°Ã§erik yÃ¼kleme hatasÄ±:', error);
+    res.status(500).json({ success: false, message: 'Sunucu hatasÄ±!' });
   }
 });
 
@@ -1045,8 +1144,8 @@ app.get('/api/contents/brand/:brandId', async (req, res) => {
 
     res.json({ success: true, data: enrichedContents });
   } catch (error) {
-    console.error('İçerikler getirme hatası:', error);
-    res.status(500).json({ success: false, message: 'Sunucu hatası!' });
+    console.error('Ä°Ã§erikler getirme hatasÄ±:', error);
+    res.status(500).json({ success: false, message: 'Sunucu hatasÄ±!' });
   }
 });
 
@@ -1060,14 +1159,14 @@ app.get('/api/contents/:id', async (req, res) => {
     if (!content) {
       return res.status(404).json({ 
         success: false, 
-        message: 'İçerik bulunamadı!' 
+        message: 'Ä°Ã§erik bulunamadÄ±!' 
       });
     }
 
     res.json({ success: true, data: content });
   } catch (error) {
-    console.error('İçerik getirme hatası:', error);
-    res.status(500).json({ success: false, message: 'Sunucu hatası!' });
+    console.error('Ä°Ã§erik getirme hatasÄ±:', error);
+    res.status(500).json({ success: false, message: 'Sunucu hatasÄ±!' });
   }
 });
 
@@ -1080,7 +1179,7 @@ app.patch('/api/contents/:id/review', async (req, res) => {
     if (!['approve', 'request_revision', 'reject'].includes(action)) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Geçersiz aksiyon!' 
+        message: 'GeÃ§ersiz aksiyon!' 
       });
     }
 
@@ -1090,13 +1189,13 @@ app.patch('/api/contents/:id/review', async (req, res) => {
     if (contentIndex === -1) {
       return res.status(404).json({ 
         success: false, 
-        message: 'İçerik bulunamadı!' 
+        message: 'Ä°Ã§erik bulunamadÄ±!' 
       });
     }
 
     const content = contents[contentIndex];
     const statusMap = {
-      approve: 'onaylandı',
+      approve: 'onayland\u0131',
       request_revision: 'revizyon_gerekli',
       reject: 'reddedildi'
     };
@@ -1114,28 +1213,28 @@ app.patch('/api/contents/:id/review', async (req, res) => {
 
     // Create notification for influencer
     const notificationMessages = {
-      approve: 'İçeriğiniz onaylandı!',
-      request_revision: 'İçeriğiniz için revizyon talep edildi.',
-      reject: 'İçeriğiniz reddedildi.'
+      approve: 'Ä°Ã§eriÄŸiniz onayland\u0131!',
+      request_revision: 'Ä°Ã§eriÄŸiniz iÃ§in revizyon talep edildi.',
+      reject: 'Ä°Ã§eriÄŸiniz reddedildi.'
     };
 
     await createNotification(
       content.influencerId,
       'influencer',
       'content_approval',
-      'İçerik Durumu',
+      'Ä°Ã§erik Durumu',
       notificationMessages[action],
       `/content/${id}`
     );
 
     res.json({ 
       success: true, 
-      message: 'İçerik durumu güncellendi!',
+      message: 'Ä°Ã§erik durumu gÃ¼ncellendi!',
       data: contents[contentIndex]
     });
   } catch (error) {
-    console.error('İçerik güncelleme hatası:', error);
-    res.status(500).json({ success: false, message: 'Sunucu hatası!' });
+    console.error('Ä°Ã§erik gÃ¼ncelleme hatasÄ±:', error);
+    res.status(500).json({ success: false, message: 'Sunucu hatasÄ±!' });
   }
 });
 
@@ -1210,8 +1309,8 @@ app.get('/api/messages/conversations/:userId', async (req, res) => {
 
     res.json({ success: true, data: enrichedConversations });
   } catch (error) {
-    console.error('Konuşmalar getirme hatası:', error);
-    res.status(500).json({ success: false, message: 'Sunucu hatası!' });
+    console.error('KonuÅŸmalar getirme hatasÄ±:', error);
+    res.status(500).json({ success: false, message: 'Sunucu hatasÄ±!' });
   }
 });
 
@@ -1227,8 +1326,8 @@ app.get('/api/messages/conversation/:conversationId', async (req, res) => {
 
     res.json({ success: true, data: conversationMessages });
   } catch (error) {
-    console.error('Mesajlar getirme hatası:', error);
-    res.status(500).json({ success: false, message: 'Sunucu hatası!' });
+    console.error('Mesajlar getirme hatasÄ±:', error);
+    res.status(500).json({ success: false, message: 'Sunucu hatasÄ±!' });
   }
 });
 
@@ -1240,7 +1339,7 @@ app.post('/api/messages/send', async (req, res) => {
     if (!senderId || !senderType || !content) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Gerekli alanları doldurun!' 
+        message: 'Gerekli alanlarÄ± doldurun!' 
       });
     }
 
@@ -1251,7 +1350,7 @@ app.post('/api/messages/send', async (req, res) => {
       if (!brandId || !influencerId) {
         return res.status(400).json({ 
           success: false, 
-          message: 'Yeni konuşma için brandId ve influencerId gerekli!' 
+          message: 'Yeni konuÅŸma iÃ§in brandId ve influencerId gerekli!' 
         });
       }
 
@@ -1309,12 +1408,12 @@ app.post('/api/messages/send', async (req, res) => {
 
     res.status(201).json({ 
       success: true, 
-      message: 'Mesaj gönderildi!',
+      message: 'Mesaj gÃ¶nderildi!',
       data: newMessage
     });
   } catch (error) {
-    console.error('Mesaj gönderme hatası:', error);
-    res.status(500).json({ success: false, message: 'Sunucu hatası!' });
+    console.error('Mesaj gÃ¶nderme hatasÄ±:', error);
+    res.status(500).json({ success: false, message: 'Sunucu hatasÄ±!' });
   }
 });
 
@@ -1328,7 +1427,7 @@ app.patch('/api/messages/:id/read', async (req, res) => {
     if (messageIndex === -1) {
       return res.status(404).json({ 
         success: false, 
-        message: 'Mesaj bulunamadı!' 
+        message: 'Mesaj bulunamadÄ±!' 
       });
     }
 
@@ -1337,12 +1436,12 @@ app.patch('/api/messages/:id/read', async (req, res) => {
 
     res.json({ 
       success: true, 
-      message: 'Mesaj okundu olarak işaretlendi!',
+      message: 'Mesaj okundu olarak iÅŸaretlendi!',
       data: messages[messageIndex]
     });
   } catch (error) {
-    console.error('Mesaj güncelleme hatası:', error);
-    res.status(500).json({ success: false, message: 'Sunucu hatası!' });
+    console.error('Mesaj gÃ¼ncelleme hatasÄ±:', error);
+    res.status(500).json({ success: false, message: 'Sunucu hatasÄ±!' });
   }
 });
 
@@ -1356,7 +1455,7 @@ app.post('/api/messages/conversation/:conversationId/archive', async (req, res) 
     if (conversationIndex === -1) {
       return res.status(404).json({ 
         success: false, 
-        message: 'Konuşma bulunamadı!' 
+        message: 'KonuÅŸma bulunamadÄ±!' 
       });
     }
 
@@ -1365,12 +1464,12 @@ app.post('/api/messages/conversation/:conversationId/archive', async (req, res) 
 
     res.json({ 
       success: true, 
-      message: 'Konuşma arşivlendi!',
+      message: 'KonuÅŸma arÅŸivlendi!',
       data: conversations[conversationIndex]
     });
   } catch (error) {
-    console.error('Konuşma arşivleme hatası:', error);
-    res.status(500).json({ success: false, message: 'Sunucu hatası!' });
+    console.error('KonuÅŸma arÅŸivleme hatasÄ±:', error);
+    res.status(500).json({ success: false, message: 'Sunucu hatasÄ±!' });
   }
 });
 
@@ -1407,12 +1506,12 @@ app.post('/api/notifications/create', async (req, res) => {
 
     res.json({ 
       success: true, 
-      message: 'Bildirim oluşturuldu!',
+      message: 'Bildirim oluÅŸturuldu!',
       notification: newNotification
     });
   } catch (error) {
-    console.error('Bildirim oluşturma hatası:', error);
-    res.status(500).json({ success: false, message: 'Sunucu hatası!' });
+    console.error('Bildirim oluÅŸturma hatasÄ±:', error);
+    res.status(500).json({ success: false, message: 'Sunucu hatasÄ±!' });
   }
 });
 
@@ -1428,8 +1527,8 @@ app.get('/api/notifications/:userId', async (req, res) => {
 
     res.json({ success: true, notifications: userNotifications });
   } catch (error) {
-    console.error('Bildirimler getirme hatası:', error);
-    res.status(500).json({ success: false, message: 'Sunucu hatası!' });
+    console.error('Bildirimler getirme hatasÄ±:', error);
+    res.status(500).json({ success: false, message: 'Sunucu hatasÄ±!' });
   }
 });
 
@@ -1443,7 +1542,7 @@ app.patch('/api/notifications/:id/read', async (req, res) => {
     if (notificationIndex === -1) {
       return res.status(404).json({ 
         success: false, 
-        message: 'Bildirim bulunamadı!' 
+        message: 'Bildirim bulunamadÄ±!' 
       });
     }
 
@@ -1456,8 +1555,8 @@ app.patch('/api/notifications/:id/read', async (req, res) => {
       data: notifications[notificationIndex]
     });
   } catch (error) {
-    console.error('Bildirim güncelleme hatası:', error);
-    res.status(500).json({ success: false, message: 'Sunucu hatası!' });
+    console.error('Bildirim gÃ¼ncelleme hatasÄ±:', error);
+    res.status(500).json({ success: false, message: 'Sunucu hatasÄ±!' });
   }
 });
 
@@ -1477,11 +1576,11 @@ app.patch('/api/notifications/read-all/:userId', async (req, res) => {
 
     res.json({ 
       success: true, 
-      message: 'Tüm bildirimler okundu!'
+      message: 'TÃ¼m bildirimler okundu!'
     });
   } catch (error) {
-    console.error('Bildirimler güncelleme hatası:', error);
-    res.status(500).json({ success: false, message: 'Sunucu hatası!' });
+    console.error('Bildirimler gÃ¼ncelleme hatasÄ±:', error);
+    res.status(500).json({ success: false, message: 'Sunucu hatasÄ±!' });
   }
 });
 
@@ -1495,7 +1594,7 @@ app.delete('/api/notifications/:id', async (req, res) => {
     if (notifications.length === filteredNotifications.length) {
       return res.status(404).json({ 
         success: false, 
-        message: 'Bildirim bulunamadı!' 
+        message: 'Bildirim bulunamadÄ±!' 
       });
     }
 
@@ -1506,8 +1605,8 @@ app.delete('/api/notifications/:id', async (req, res) => {
       message: 'Bildirim silindi!'
     });
   } catch (error) {
-    console.error('Bildirim silme hatası:', error);
-    res.status(500).json({ success: false, message: 'Sunucu hatası!' });
+    console.error('Bildirim silme hatasÄ±:', error);
+    res.status(500).json({ success: false, message: 'Sunucu hatasÄ±!' });
   }
 });
 
@@ -1553,8 +1652,8 @@ app.get('/api/analytics/overview/:brandId', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Analytics getirme hatası:', error);
-    res.status(500).json({ success: false, message: 'Sunucu hatası!' });
+    console.error('Analytics getirme hatasÄ±:', error);
+    res.status(500).json({ success: false, message: 'Sunucu hatasÄ±!' });
   }
 });
 
@@ -1587,8 +1686,8 @@ app.get('/api/analytics/campaigns/:brandId', async (req, res) => {
 
     res.json({ success: true, data: campaignPerformance });
   } catch (error) {
-    console.error('Kampanya performansı getirme hatası:', error);
-    res.status(500).json({ success: false, message: 'Sunucu hatası!' });
+    console.error('Kampanya performansÄ± getirme hatasÄ±:', error);
+    res.status(500).json({ success: false, message: 'Sunucu hatasÄ±!' });
   }
 });
 
@@ -1627,8 +1726,8 @@ app.get('/api/analytics/trends/:brandId', async (req, res) => {
 
     res.json({ success: true, data: { monthly, weekly: [] } });
   } catch (error) {
-    console.error('Trend verileri getirme hatası:', error);
-    res.status(500).json({ success: false, message: 'Sunucu hatası!' });
+    console.error('Trend verileri getirme hatasÄ±:', error);
+    res.status(500).json({ success: false, message: 'Sunucu hatasÄ±!' });
   }
 });
 
@@ -1661,8 +1760,8 @@ app.get('/api/analytics/categories/:brandId', async (req, res) => {
 
     res.json({ success: true, data: categoryData });
   } catch (error) {
-    console.error('Kategori verileri getirme hatası:', error);
-    res.status(500).json({ success: false, message: 'Sunucu hatası!' });
+    console.error('Kategori verileri getirme hatasÄ±:', error);
+    res.status(500).json({ success: false, message: 'Sunucu hatasÄ±!' });
   }
 });
 
@@ -1679,7 +1778,7 @@ app.get('/api/budget/:brandId', async (req, res) => {
     if (!brand) {
       return res.status(404).json({ 
         success: false, 
-        message: 'Marka bulunamadı!' 
+        message: 'Marka bulunamadÄ±!' 
       });
     }
 
@@ -1706,8 +1805,8 @@ app.get('/api/budget/:brandId', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Bütçe getirme hatası:', error);
-    res.status(500).json({ success: false, message: 'Sunucu hatası!' });
+    console.error('BÃ¼tÃ§e getirme hatasÄ±:', error);
+    res.status(500).json({ success: false, message: 'Sunucu hatasÄ±!' });
   }
 });
 
@@ -1746,8 +1845,8 @@ app.get('/api/budget/breakdown/:brandId', async (req, res) => {
 
     res.json({ success: true, data: breakdown });
   } catch (error) {
-    console.error('Bütçe detayı getirme hatası:', error);
-    res.status(500).json({ success: false, message: 'Sunucu hatası!' });
+    console.error('BÃ¼tÃ§e detayÄ± getirme hatasÄ±:', error);
+    res.status(500).json({ success: false, message: 'Sunucu hatasÄ±!' });
   }
 });
 
@@ -1780,7 +1879,11 @@ app.get('/api/budget/history/:brandId', async (req, res) => {
 
     res.json({ success: true, data: history });
   } catch (error) {
-    console.error('Ödeme geçmişi getirme hatası:', error);
-    res.status(500).json({ success: false, message: 'Sunucu hatası!' });
+    console.error('Ã–deme geÃ§miÅŸi getirme hatasÄ±:', error);
+    res.status(500).json({ success: false, message: 'Sunucu hatasÄ±!' });
   }
+});
+
+app.listen(PORT, () => {
+  console.log('[Infuhub] API server listening on port ' + PORT);
 });

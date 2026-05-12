@@ -1,0 +1,66 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Profil ve kampanya görselleri (okuma: auth, yazma: sahibi)
+    match /profile-photos/{userId}/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    match /brand-photos/{brandId}/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == brandId;
+    }
+
+    match /campaign-images/{brandId}/{campaignId}/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == brandId;
+    }
+
+    // Influencer içerik yüklemeleri
+    match /offer-contents/{influencerId}/{campaignId}/{offerId}/{allPaths=**} {
+      allow write: if request.auth != null && request.auth.uid == influencerId;
+      allow read: if request.auth != null;
+    }
+
+    // Doğrulama belgeleri (sadece sahibi)
+    match /verification-photos/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    match /brand-verification-documents/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Ödeme doğrulama — vergi istisna belgesi (Kazançlar sekmesi)
+    match /payout-tax-docs/{userId}/{allPaths=**} {
+      allow write: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.size < 20 * 1024 * 1024
+        && (
+          request.resource.contentType.matches('image/.*')
+          || request.resource.contentType == 'application/pdf'
+        );
+      allow read, delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Influencer portfolyo (görsel / PDF) — sadece ilgili kullanıcı yükleyebilir/silebilir
+    match /portfolio-items/{influencerId}/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.auth.uid == influencerId
+        && request.resource.size < 20 * 1024 * 1024
+        && (
+          request.resource.contentType.matches('image/.*')
+          || request.resource.contentType == 'application/pdf'
+        );
+      allow delete: if request.auth != null && request.auth.uid == influencerId;
+    }
+
+    // Diğer her şey kapalı
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

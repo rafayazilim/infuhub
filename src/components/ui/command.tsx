@@ -1,4 +1,4 @@
-import * as React from "react";
+﻿import * as React from "react";
 import { type DialogProps } from "@radix-ui/react-dialog";
 import { Command as CommandPrimitive } from "cmdk";
 import { Search } from "lucide-react";
@@ -105,7 +105,7 @@ const CommandItem = React.forwardRef<
   <CommandPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none data-[disabled=true]:pointer-events-none data-[selected='true']:bg-accent data-[selected=true]:text-accent-foreground data-[disabled=true]:opacity-50",
+      "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none data-[disabled=true]:pointer-events-none data-[selected=true]:bg-[#e3447c]/18 data-[selected=true]:text-foreground dark:data-[selected=true]:bg-[#e3447c]/28 data-[disabled=true]:opacity-50",
       className,
     )}
     {...props}
@@ -130,3 +130,4 @@ export {
   CommandShortcut,
   CommandSeparator,
 };
+

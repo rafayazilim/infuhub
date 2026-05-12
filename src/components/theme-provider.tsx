@@ -1,6 +1,13 @@
-import { createContext, useContext, useEffect, useState } from "react"
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+} from "react"
 
-type Theme = "dark" | "light" | "system"
+/** Uygulama yalnızca koyu temaya sabitliyor; açık/sistem seçeneği yok. */
+export type Theme = "dark" | "light" | "system"
 
 type ThemeProviderProps = {
   children: React.ReactNode
@@ -9,52 +16,52 @@ type ThemeProviderProps = {
 }
 
 type ThemeProviderState = {
-  theme: Theme
+  theme: "dark"
   setTheme: (theme: Theme) => void
 }
 
 const initialState: ThemeProviderState = {
-  theme: "system",
+  theme: "dark",
   setTheme: () => null,
 }
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState)
 
+function applyForcedDark(storageKey: string) {
+  const root = window.document.documentElement
+  root.classList.remove("light", "dark")
+  root.classList.add("dark")
+  root.dataset.theme = "dark"
+  try {
+    localStorage.setItem(storageKey, "dark")
+  } catch {
+    /* ignore */
+  }
+}
+
 export function ThemeProvider({
   children,
-  defaultTheme = "system",
   storageKey = "vite-ui-theme",
   ...props
 }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
+  useEffect(() => {
+    applyForcedDark(storageKey)
+  }, [storageKey])
+
+  const setTheme = useCallback(
+    (_theme: Theme) => {
+      applyForcedDark(storageKey)
+    },
+    [storageKey]
   )
 
-  useEffect(() => {
-    const root = window.document.documentElement
-
-    root.classList.remove("light", "dark")
-
-    if (theme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-        .matches
-        ? "dark"
-        : "light"
-
-      root.classList.add(systemTheme)
-      return
-    }
-
-    root.classList.add(theme)
-  }, [theme])
-
-  const value = {
-    theme,
-    setTheme: (theme: Theme) => {
-      localStorage.setItem(storageKey, theme)
-      setTheme(theme)
-    },
-  }
+  const value = useMemo(
+    () => ({
+      theme: "dark" as const,
+      setTheme,
+    }),
+    [setTheme]
+  )
 
   return (
     <ThemeProviderContext.Provider {...props} value={value}>

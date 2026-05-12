@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { Card } from '@/components/ui/card';
 import { User } from 'lucide-react';
 
@@ -9,9 +9,9 @@ interface ProfileSettingsProps {
 
 export function ProfileSettings({ influencerId, onProfileUpdate }: ProfileSettingsProps) {
   return (
-    <Card className="p-6 border border-gray-200/50 dark:border-gray-800/50 rounded-xl bg-white dark:bg-gray-900 shadow-sm">
+    <Card className="mac-surface p-6">
       <div className="flex items-center gap-4 mb-6">
-        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white">
+        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#08afd5] to-[#e3447c] flex items-center justify-center text-white">
           <User size={32} />
         </div>
         <div>
@@ -27,3 +27,5 @@ export function ProfileSettings({ influencerId, onProfileUpdate }: ProfileSettin
     </Card>
   );
 }
+
+

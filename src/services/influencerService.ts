@@ -1,4 +1,5 @@
-const API_BASE_URL = 'http://localhost:3002/api';
+﻿import { getAuthHeaders } from '@/services/authToken';
+import { buildApiUrl } from '@/lib/apiConfig';
 
 export interface SocialPlatform {
   id: 'instagram' | 'tiktok' | 'youtube' | 'twitter';
@@ -14,7 +15,7 @@ export interface Influencer {
   followerRange: string;
   categories: string[];
   verificationPhoto: string;
-  status: 'onaylandı' | 'beklemede' | 'reddedildi';
+  status: 'doğrulanmadı' | 'onaylandı' | 'beklemede' | 'reddedildi';
   createdAt: string;
   updatedAt?: string;
 }
@@ -28,7 +29,12 @@ export interface InfluencerFilters {
 
 // Get all influencers
 export async function getAllInfluencers(): Promise<Influencer[]> {
-  const response = await fetch(`${API_BASE_URL}/influencers`);
+  const authHeaders = await getAuthHeaders();
+  const response = await fetch(buildApiUrl('/influencers'), {
+    headers: {
+      ...authHeaders,
+    },
+  });
   const data = await response.json();
 
   if (!data.success) {
@@ -84,3 +90,5 @@ export function filterInfluencers(
 
   return filtered;
 }
+
+

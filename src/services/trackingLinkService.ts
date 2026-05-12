@@ -1,5 +1,8 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3002';
-const TRACKING_BASE_URL = import.meta.env.VITE_TRACKING_BASE_URL || 'http://localhost:3002';
+﻿import { ref, get } from 'firebase/database';
+import { database } from '@/config/firebase';
+import { getFirebaseErrorMessage } from '@/lib/firebaseErrorMessages';
+import { getAuthHeaders } from '@/services/authToken';
+import { buildApiUrl, getTrackingPublicBaseUrl } from '@/lib/apiConfig';
 
 export interface TrackingLink {
   shortCode: string;
@@ -21,51 +24,70 @@ export interface CreateTrackingLinkData {
   platform?: string;
 }
 
-/**
- * Tracking link oluştur
- */
 export async function createTrackingLink(
   data: CreateTrackingLinkData
 ): Promise<{ shortCode: string; trackingUrl: string }> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/tracking-links`, {
+    const authHeaders = await getAuthHeaders();
+    const response = await fetch(buildApiUrl('/tracking-links'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...authHeaders,
       },
       body: JSON.stringify(data),
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Tracking link oluşturulurken bir hata oluştu');
+      const errBody = await response.json().catch(() => ({}));
+      throw new Error(
+        getFirebaseErrorMessage(errBody, 'Tracking link oluşturulurken bir hata oluştu.')
+      );
     }
 
     const result = await response.json();
     return result.data;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Tracking link oluşturma hatası:', error);
-    throw new Error(error.message || 'Tracking link oluşturulurken bir hata oluştu');
+    throw new Error(getFirebaseErrorMessage(error, 'Tracking link oluşturulurken bir hata oluştu.'));
   }
 }
 
-/**
- * Offer'a ait tracking link'i getir
- */
 export async function getTrackingLinkByOfferId(offerId: string): Promise<TrackingLink | null> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/tracking-links/offer/${offerId}`);
+    const snapshot = await get(ref(database, 'tracking_links'));
+    if (snapshot.exists()) {
+      const links = snapshot.val() as Record<string, TrackingLink>;
+      const matched = Object.values(links).filter((link) => link.offerId === offerId);
 
+      if (matched.length > 0) {
+        const active = matched.find((link) => link.isActive === true) || matched[0];
+        return {
+          ...active,
+          clickCount: active.clickCount || 0,
+          trackingUrl: active.trackingUrl || `${getTrackingPublicBaseUrl()}/c/${active.shortCode}`,
+        };
+      }
+    }
+
+    const authHeaders = await getAuthHeaders();
+    const response = await fetch(buildApiUrl(`/tracking-links/offer/${offerId}`), {
+      headers: {
+        ...authHeaders,
+      },
+    });
     if (!response.ok) {
       if (response.status === 404) {
         return null;
       }
-      const error = await response.json();
-      throw new Error(error.message || 'Tracking link getirilirken bir hata oluştu');
+      const errBody = await response.json().catch(() => ({}));
+      throw new Error(
+        getFirebaseErrorMessage(errBody, 'Tracking link getirilirken bir hata oluştu.')
+      );
     }
 
     const result = await response.json();
-    return result.data;
+    return result.data || null;
   } catch (error: any) {
     console.error('Tracking link getirme hatası:', error);
     return null;

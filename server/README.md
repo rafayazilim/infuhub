@@ -73,5 +73,25 @@ Body: {
 
 ## Port
 
-Backend varsayılan olarak **3001** portunda çalışır.
+Backend varsayılan olarak `PORT` ile belirlenir (ör. `server/.env` içinde `PORT=3002`).
+
+## E-posta (Google Workspace SMTP)
+
+Transactional e-postalar (kayıt doğrulama, şifre sıfırlama, marka/influencer onay ve ret, ödeme doğrulama vb.) **Nodemailer** ile `server/services/mailService.js` üzerinden tek transporter ile gider. HTML şablonları `server/services/mail/` altında merkezidir: `renderEmailLayout.js`, `designTokens.js`, `templates/*`.
+
+Logo (üst header): `INFUHUB_LOGO_URL` (mutlak HTTPS) tanımlı değilse e-posta **INFU**+**HUB** iki tonlu metin logo kullanır.
+
+Gerekli ortam değişkenleri — ayrıntılar ve örnek değerler için `server/.env.example`:
+
+- `SMTP_HOST` (ör. `smtp.gmail.com`)
+- `SMTP_PORT` (ör. `465`)
+- `SMTP_SECURE` (`true` / `false` string)
+- `SMTP_USER` (Google Workspace hesabı, örn. `no-reply@infuhub.ai`)
+- `SMTP_PASS` (Google **uygulama şifresi**; repoda ve loglarda tutulmamalı)
+- `MAIL_FROM_EMAIL` (görünen gönderen adresi; genelde `SMTP_USER` ile aynı)
+- `MAIL_FROM_NAME` (ör. `INFUHUB`)
+
+Uygulama başlarken eksik değişkenler `console.warn` ile bildirilir; süreç bilinçli olarak sonlandırılmaz.
+
+İsteğe bağlı test: `ENABLE_TEST_EMAIL_ENDPOINT=true` iken `POST /api/admin/test-email` + `Authorization: Bearer <Firebase ID token>` ve JSON gövde `{ "to": "..." }`.
 

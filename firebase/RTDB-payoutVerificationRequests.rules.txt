@@ -1,0 +1,30 @@
+Firebase Console → Realtime Database → Rules
+Aşağıdaki "payoutVerificationRequests" bloğunu mevcut kök "rules" objenizin içine ekleyin (virgülle ayırın). "admins" düğümünüz admin paneldeki gibi admins/{uid} olmalı.
+
+--- YAPIŞTIRILACAK BLOK (sadece bu kısım) ---
+
+    "payoutVerificationRequests": {
+      "influencer": {
+        ".read": "auth != null && root.child('admins').child(auth.uid).exists()",
+        "$influencerId": {
+          ".read": "auth != null && (auth.uid === $influencerId || root.child('admins').child(auth.uid).exists())",
+          ".write": "auth != null && (auth.uid === $influencerId || root.child('admins').child(auth.uid).exists())"
+        }
+      }
+    }
+
+--- AÇIKLAMA ---
+- Influencer: sadece kendi $influencerId düğümüne yazabilir / okuyabilir (başvuru + güncelleme).
+- Admin: tüm influencer başvurularını listelemek için "influencer" seviyesinde .read (yalnızca admins kayıtlı kullanıcı).
+- Admin onayı influencers/{uid}/payoutProfile yoluna da yazar. Realtime Database'de üst düğüm .write sadece sahibe izin veriyorsa, admin'in çocuğa yazması da engellenir. Çözüm seçenekleri:
+  (A) influencers/$userId için .write: auth != null && (auth.uid === $userId || root.child('admins').child(auth.uid).exists())  [admin tüm influencer alanını değiştirebilir — sadece güvendiğiniz adminler]
+  (B) Onay/red için Cloud Function
+
+Örnek (A) — mevcut influencers kuralınızı BUNUNLA değiştirmek istiyorsanız ($userId değişken adınız neyse aynı kalsın):
+
+    "influencers": {
+      "$userId": {
+        ".read": "......",
+        ".write": "auth != null && (auth.uid === $userId || root.child('admins').child(auth.uid).exists())"
+      }
+    }

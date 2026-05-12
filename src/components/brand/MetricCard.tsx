@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -26,7 +26,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
     <Card className="h-full p-6 border border-gray-200/50 dark:border-gray-800/50 rounded-xl bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between">
       <div>
         <div className="flex items-start justify-between mb-4">
-          <div className="p-2.5 rounded-[10px] bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400">
+          <div className="p-2.5 rounded-[10px] bg-[#08afd5]/15 dark:bg-[#08afd5]/20 text-[#08afd5] dark:text-[#6edff3]">
             {icon}
           </div>
           {trend && (
@@ -44,3 +44,5 @@ export const MetricCard: React.FC<MetricCardProps> = ({
     </Card>
   </motion.div>
 );
+
+

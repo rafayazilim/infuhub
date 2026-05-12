@@ -1,0 +1,140 @@
+{
+  "rules": {
+    ".read": "auth != null",
+
+    "admins": {
+      "$uid": {
+        ".read": "auth != null && root.child('admins').child(auth.uid).exists()",
+        ".write": "auth != null && (root.child('admins').child(auth.uid).exists() || !root.child('admins').exists())"
+      }
+    },
+
+    "pendingBrandWalletDebits": {
+      "$brandId": {
+        ".read": "auth.uid == $brandId || root.child('admins').child(auth.uid).exists()",
+        "$offerId": {
+          ".read": "auth.uid == $brandId || root.child('admins').child(auth.uid).exists() || (data.exists() && data.child('influencerId').val() == auth.uid)",
+          ".write": "root.child('admins').child(auth.uid).exists() || (auth.uid == $brandId && data.exists() && !newData.exists()) || (!data.exists() && newData.child('brandId').val() == $brandId && newData.child('offerId').val() == $offerId && newData.child('influencerId').val() == auth.uid && newData.child('createdByInfluencerUid').val() == auth.uid)",
+          ".validate": "!newData.exists() || root.child('admins').child(auth.uid).exists() || (newData.hasChildren(['brandId','offerId','amount','influencerId','campaignId','createdAt','createdByInfluencerUid']) && newData.child('brandId').val() == $brandId && newData.child('offerId').val() == $offerId && newData.child('influencerId').val() == auth.uid && newData.child('createdByInfluencerUid').val() == auth.uid && newData.child('amount').isNumber() && newData.child('amount').val() > 0 && newData.child('campaignId').isString() && newData.child('createdAt').isString())"
+        }
+      }
+    },
+
+    "pendingBrandToInfluencerPayouts": {
+      "$brandId": {
+        ".read": "auth.uid == $brandId || root.child('admins').child(auth.uid).exists()",
+        "$offerId": {
+          ".write": "root.child('admins').child(auth.uid).exists() || (!data.exists() && auth.uid == $brandId)",
+          ".validate": "!newData.exists() || root.child('admins').child(auth.uid).exists() || (newData.hasChildren(['brandId','offerId','influencerId','amount','campaignId','createdAt','createdByBrandUid','kind']) && newData.child('brandId').val() == $brandId && newData.child('offerId').val() == $offerId && newData.child('createdByBrandUid').val() == auth.uid && newData.child('influencerId').isString() && newData.child('campaignId').isString() && newData.child('amount').isNumber() && newData.child('amount').val() > 0 && newData.child('amount').val() <= 100000000 && newData.child('createdAt').isString() && newData.child('kind').val() == 'content_approval')"
+        }
+      }
+    },
+
+    "brands": {
+      "$brandId": {
+        ".write": "auth.uid == $brandId || root.child('admins').child(auth.uid).exists()",
+        "campaigns": {
+          "$campaignId": {
+            ".write": "auth.uid == $brandId || root.child('admins').child(auth.uid).exists()",
+            "incomingOffers": {
+              "$offerId": {
+                ".write": "auth.uid == $brandId || data.child('influencerId').val() == auth.uid || newData.child('influencerId').val() == auth.uid || root.child('admins').child(auth.uid).exists()"
+              }
+            }
+          }
+        },
+        "walletTransactions": {
+          "$txId": {
+            ".write": "auth.uid == $brandId || root.child('admins').child(auth.uid).exists()"
+          }
+        }
+      }
+    },
+
+    "influencers": {
+      "$influencerId": {
+        ".write": "auth.uid == $influencerId || root.child('admins').child(auth.uid).exists()"
+      }
+    },
+
+    "geciciMarkalar": {
+      "$uid": {
+        ".read": "auth.uid == $uid || root.child('admins').child(auth.uid).exists()",
+        ".write": "auth.uid == $uid || root.child('admins').child(auth.uid).exists()"
+      }
+    },
+
+    "geciciInfluencerlar": {
+      "$uid": {
+        ".read": "auth.uid == $uid || root.child('admins').child(auth.uid).exists()",
+        ".write": "auth.uid == $uid || root.child('admins').child(auth.uid).exists()"
+      }
+    },
+
+    "offers": {
+      "$offerId": {
+        ".read": "auth != null",
+        ".write": "auth.uid == data.child('brandId').val() || auth.uid == data.child('influencerId').val() || auth.uid == newData.child('brandId').val() || auth.uid == newData.child('influencerId').val() || root.child('admins').child(auth.uid).exists()"
+      }
+    },
+
+    "conversations": {
+      "$convId": {
+        ".read": "auth != null",
+        ".write": "auth.uid == data.child('brandId').val() || auth.uid == data.child('influencerId').val() || auth.uid == newData.child('brandId').val() || auth.uid == newData.child('influencerId').val() || root.child('admins').child(auth.uid).exists()"
+      }
+    },
+
+    "notifications": {
+      "$userType": {
+        "$uid": {
+          ".read": "auth.uid == $uid || root.child('admins').child(auth.uid).exists()",
+          "$notificationId": {
+            ".write": "auth.uid == $uid || newData.child('metadata').child('brandId').val() == auth.uid || newData.child('metadata').child('influencerId').val() == auth.uid || root.child('admins').child(auth.uid).exists()"
+          }
+        }
+      }
+    },
+
+    "tracking_links": {
+      "$shortCode": {
+        ".read": "auth != null",
+        ".write": "auth.uid == data.child('brandId').val() || auth.uid == newData.child('brandId').val() || root.child('admins').child(auth.uid).exists()"
+      }
+    },
+
+    "verificationRequests": {
+      "brand": {
+        "$brandId": {
+          ".read": "auth.uid == $brandId || root.child('admins').child(auth.uid).exists()",
+          ".write": "auth.uid == $brandId || root.child('admins').child(auth.uid).exists()"
+        }
+      },
+      "influencer": {
+        "$influencerId": {
+          ".read": "auth.uid == $influencerId || root.child('admins').child(auth.uid).exists()",
+          ".write": "auth.uid == $influencerId || root.child('admins').child(auth.uid).exists()"
+        }
+      }
+    },
+
+    "payoutVerificationRequests": {
+      "influencer": {
+        ".read": "auth != null && root.child('admins').child(auth.uid).exists()",
+        "$influencerId": {
+          ".read": "auth.uid == $influencerId || root.child('admins').child(auth.uid).exists()",
+          ".write": "auth.uid == $influencerId || root.child('admins').child(auth.uid).exists()"
+        }
+      }
+    },
+
+    "supportMessages": {
+      ".read": "auth != null && root.child('admins').child(auth.uid).exists()",
+      ".indexOn": ["createdAt", "category"],
+      "$msgId": {
+        ".write": "!data.exists() || (data.exists() && root.child('admins').child(auth.uid).exists())",
+        ".validate": "( !data.exists() && newData.hasChildren(['category', 'firstName', 'lastName', 'subject', 'email', 'phone', 'message', 'createdAt']) && !newData.hasChild('reviewed') && !newData.hasChild('reviewedAt') && !newData.hasChild('reviewedBy') && newData.child('category').isString() && newData.child('firstName').isString() && newData.child('firstName').val().length <= 80 && newData.child('lastName').isString() && newData.child('lastName').val().length <= 80 && newData.child('subject').isString() && newData.child('subject').val().length <= 200 && newData.child('email').isString() && newData.child('email').val().length <= 200 && newData.child('phone').isString() && newData.child('phone').val().length <= 40 && newData.child('message').isString() && newData.child('message').val().length <= 5000 && newData.child('createdAt').isString() && (newData.child('category').val() == 'fatura' || newData.child('category').val() == 'acil' || newData.child('category').val() == 'satis' || newData.child('category').val() == 'kotuye_kullanim' || newData.child('category').val() == 'platform') && (!newData.hasChild('senderUid') || newData.child('senderUid').val() == null || (auth != null && newData.child('senderUid').isString() && newData.child('senderUid').val() == auth.uid)) ) || ( data.exists() && root.child('admins').child(auth.uid).exists() && newData.child('category').val() == data.child('category').val() && newData.child('firstName').val() == data.child('firstName').val() && newData.child('lastName').val() == data.child('lastName').val() && newData.child('subject').val() == data.child('subject').val() && newData.child('email').val() == data.child('email').val() && newData.child('phone').val() == data.child('phone').val() && newData.child('message').val() == data.child('message').val() && newData.child('createdAt').val() == data.child('createdAt').val() && ( (!data.hasChild('senderUid') && !newData.hasChild('senderUid')) || (data.hasChild('senderUid') && newData.hasChild('senderUid') && newData.child('senderUid').val() == data.child('senderUid').val()) ) && newData.hasChildren(['reviewed', 'reviewedAt', 'reviewedBy']) && newData.child('reviewed').isBoolean() && newData.child('reviewedAt').isString() && newData.child('reviewedAt').val().length <= 64 && newData.child('reviewedBy').isString() && newData.child('reviewedBy').val().length <= 128 && ( ( newData.child('reviewed').val() == true && newData.child('reviewedAt').val().length > 0 && newData.child('reviewedBy').val() == auth.uid ) || ( newData.child('reviewed').val() == false && newData.child('reviewedAt').val() == '' && newData.child('reviewedBy').val() == '' ) ) )"
+      }
+    }
+  }
+}

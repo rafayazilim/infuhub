@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { createCampaign } from '@/services/firebaseCampaignService';
+import { REGISTRATION_PLATFORM_DEFS } from '@/constants/registrationPlatforms';
+import { RegistrationPlatformIcon } from '@/components/shared/RegistrationPlatformIcon';
+import { trackEvent } from '@/utils/metaPixel';
 
 interface CampaignData {
   productName: string;
@@ -41,7 +44,6 @@ export const CampaignModal: React.FC<CampaignModalProps> = ({ isOpen, onClose, o
     contentFormats: [],
   });
 
-  const platforms = ['Instagram', 'TikTok', 'YouTube'];
   const contentFormats = ['Story', 'Reels', 'Post', 'Video'];
 
   const togglePlatform = (platform: string) => {
@@ -94,6 +96,8 @@ export const CampaignModal: React.FC<CampaignModalProps> = ({ isOpen, onClose, o
         platforms: campaignData.platforms,
         contentFormats: campaignData.contentFormats,
       });
+
+      trackEvent('CreateCampaign');
 
       // Reset form
       setCampaignData({
@@ -195,7 +199,7 @@ export const CampaignModal: React.FC<CampaignModalProps> = ({ isOpen, onClose, o
                           onChange={(e) =>
                             setCampaignData({ ...campaignData, productName: e.target.value })
                           }
-                          className="w-full px-4 py-2.5 rounded-[10px] border border-gray-300/50 dark:border-gray-700/50 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                          className="w-full px-4 py-2.5 rounded-[10px] border border-gray-300/50 dark:border-gray-700/50 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#08afd5] focus:border-transparent transition-all"
                           placeholder="Ürün adını girin"
                         />
                       </div>
@@ -212,7 +216,7 @@ export const CampaignModal: React.FC<CampaignModalProps> = ({ isOpen, onClose, o
                             })
                           }
                           rows={3}
-                          className="w-full px-4 py-2.5 rounded-[10px] border border-gray-300/50 dark:border-gray-700/50 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-none mac-scrollbar"
+                          className="w-full px-4 py-2.5 rounded-[10px] border border-gray-300/50 dark:border-gray-700/50 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#08afd5] focus:border-transparent transition-all resize-none mac-scrollbar"
                           placeholder="Ürün hakkında detaylı bilgi"
                         />
                       </div>
@@ -235,7 +239,7 @@ export const CampaignModal: React.FC<CampaignModalProps> = ({ isOpen, onClose, o
                           onChange={(e) =>
                             setCampaignData({ ...campaignData, ageRange: e.target.value })
                           }
-                          className="w-full px-4 py-2.5 rounded-[10px] border border-gray-300/50 dark:border-gray-700/50 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                          className="w-full px-4 py-2.5 rounded-[10px] border border-gray-300/50 dark:border-gray-700/50 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#08afd5] focus:border-transparent transition-all"
                           placeholder="18-35"
                         />
                       </div>
@@ -249,7 +253,7 @@ export const CampaignModal: React.FC<CampaignModalProps> = ({ isOpen, onClose, o
                           onChange={(e) =>
                             setCampaignData({ ...campaignData, interests: e.target.value })
                           }
-                          className="w-full px-4 py-2.5 rounded-[10px] border border-gray-300/50 dark:border-gray-700/50 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                          className="w-full px-4 py-2.5 rounded-[10px] border border-gray-300/50 dark:border-gray-700/50 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#08afd5] focus:border-transparent transition-all"
                           placeholder="Moda, Teknoloji"
                         />
                       </div>
@@ -263,7 +267,7 @@ export const CampaignModal: React.FC<CampaignModalProps> = ({ isOpen, onClose, o
                           onChange={(e) =>
                             setCampaignData({ ...campaignData, location: e.target.value })
                           }
-                          className="w-full px-4 py-2.5 rounded-[10px] border border-gray-300/50 dark:border-gray-700/50 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                          className="w-full px-4 py-2.5 rounded-[10px] border border-gray-300/50 dark:border-gray-700/50 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#08afd5] focus:border-transparent transition-all"
                           placeholder="Türkiye"
                         />
                       </div>
@@ -286,7 +290,7 @@ export const CampaignModal: React.FC<CampaignModalProps> = ({ isOpen, onClose, o
                           onChange={(e) =>
                             setCampaignData({ ...campaignData, totalBudget: e.target.value })
                           }
-                          className="w-full px-4 py-2.5 rounded-[10px] border border-gray-300/50 dark:border-gray-700/50 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                          className="w-full px-4 py-2.5 rounded-[10px] border border-gray-300/50 dark:border-gray-700/50 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#08afd5] focus:border-transparent transition-all"
                           placeholder="50000"
                         />
                       </div>
@@ -303,7 +307,7 @@ export const CampaignModal: React.FC<CampaignModalProps> = ({ isOpen, onClose, o
                               offerPerInfluencer: e.target.value,
                             })
                           }
-                          className="w-full px-4 py-2.5 rounded-[10px] border border-gray-300/50 dark:border-gray-700/50 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                          className="w-full px-4 py-2.5 rounded-[10px] border border-gray-300/50 dark:border-gray-700/50 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#08afd5] focus:border-transparent transition-all"
                           placeholder="5000"
                         />
                       </div>
@@ -326,7 +330,7 @@ export const CampaignModal: React.FC<CampaignModalProps> = ({ isOpen, onClose, o
                           onChange={(e) =>
                             setCampaignData({ ...campaignData, startDate: e.target.value })
                           }
-                          className="w-full px-4 py-2.5 rounded-[10px] border border-gray-300/50 dark:border-gray-700/50 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                          className="w-full px-4 py-2.5 rounded-[10px] border border-gray-300/50 dark:border-gray-700/50 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#08afd5] focus:border-transparent transition-all"
                         />
                       </div>
                       <div>
@@ -339,7 +343,7 @@ export const CampaignModal: React.FC<CampaignModalProps> = ({ isOpen, onClose, o
                           onChange={(e) =>
                             setCampaignData({ ...campaignData, endDate: e.target.value })
                           }
-                          className="w-full px-4 py-2.5 rounded-[10px] border border-gray-300/50 dark:border-gray-700/50 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                          className="w-full px-4 py-2.5 rounded-[10px] border border-gray-300/50 dark:border-gray-700/50 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#08afd5] focus:border-transparent transition-all"
                         />
                       </div>
                     </div>
@@ -351,17 +355,19 @@ export const CampaignModal: React.FC<CampaignModalProps> = ({ isOpen, onClose, o
                       Platform Seçimi
                     </h4>
                     <div className="flex flex-wrap gap-3">
-                      {platforms.map((platform) => (
+                      {REGISTRATION_PLATFORM_DEFS.map(({ id, label }) => (
                         <button
-                          key={platform}
-                          onClick={() => togglePlatform(platform)}
-                          className={`px-6 py-2.5 rounded-[10px] font-medium transition-all duration-150 ${
-                            campaignData.platforms.includes(platform)
-                              ? 'bg-purple-600 text-white shadow-sm'
+                          key={id}
+                          type="button"
+                          onClick={() => togglePlatform(label)}
+                          className={`px-6 py-2.5 rounded-[10px] font-medium transition-all duration-150 flex items-center gap-2 ${
+                            campaignData.platforms.includes(label)
+                              ? 'bg-[#08afd5] text-white shadow-sm'
                               : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                           }`}
                         >
-                          {platform}
+                          <RegistrationPlatformIcon platformId={id} size={18} />
+                          {label}
                         </button>
                       ))}
                     </div>
@@ -379,7 +385,7 @@ export const CampaignModal: React.FC<CampaignModalProps> = ({ isOpen, onClose, o
                           onClick={() => toggleContentFormat(format)}
                           className={`px-6 py-2.5 rounded-[10px] font-medium transition-all duration-150 ${
                             campaignData.contentFormats.includes(format)
-                              ? 'bg-purple-600 text-white shadow-sm'
+                              ? 'bg-[#08afd5] text-white shadow-sm'
                               : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                           }`}
                         >
@@ -404,7 +410,7 @@ export const CampaignModal: React.FC<CampaignModalProps> = ({ isOpen, onClose, o
                 <Button
                   onClick={handleSave}
                   disabled={isSaving}
-                  className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2.5 rounded-[10px] disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="brand-btn-primary text-white px-6 py-2.5 rounded-[10px] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSaving ? (
                     <span className="flex items-center gap-2">
@@ -423,3 +429,6 @@ export const CampaignModal: React.FC<CampaignModalProps> = ({ isOpen, onClose, o
     </AnimatePresence>
   );
 };
+
+
+
