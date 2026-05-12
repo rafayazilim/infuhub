@@ -1,0 +1,26 @@
+[
+  {
+    "id": "1766864308324",
+    "brandName": "RAFA",
+    "email": "hello@rafayazilim.com",
+    "password": "123456",
+    "industry": "Teknoloji",
+    "budget": 0,
+    "website": "rafayazilim.com",
+    "status": "onaylandı",
+    "createdAt": "2025-12-27T19:38:28.324Z",
+    "updatedAt": "2025-12-27T19:38:45.943Z"
+  },
+  {
+    "id": "1767912596659-eekjsdequ",
+    "brandName": "denememaarka",
+    "email": "denememarka@gmail.com",
+    "password": "123456",
+    "industry": "Teknoloji",
+    "budget": 2,
+    "website": "rafayazilim.com",
+    "status": "onaylandı",
+    "createdAt": "2026-01-08T22:49:56.659Z",
+    "updatedAt": "2026-01-08T22:50:03.487Z"
+  }
+]

@@ -1,0 +1,95 @@
+[
+  {
+    "id": "1766837057518",
+    "fullName": "Ramazan Nasuhbeyoğlu",
+    "email": "ramazannasuhbye@gmail.com",
+    "password": "123456",
+    "platforms": [
+      {
+        "id": "instagram",
+        "username": "nasuhbey0glu"
+      }
+    ],
+    "followerRange": "1K - 10K",
+    "categories": [
+      "Teknoloji",
+      "Eğitim"
+    ],
+    "verificationPhoto": "/uploads/1766837057505-277713671.png",
+    "status": "onaylandı",
+    "createdAt": "2025-12-27T12:04:17.518Z",
+    "updatedAt": "2025-12-27T12:05:10.992Z"
+  },
+  {
+    "id": "1766841472962",
+    "fullName": "Ramazan Nasuhbeyoğlu",
+    "email": "ramazan@gmail.com",
+    "password": "12345",
+    "platforms": [
+      {
+        "id": "instagram",
+        "username": "nasuhbey0glu"
+      },
+      {
+        "id": "twitter",
+        "username": "nasuhbey0glu"
+      }
+    ],
+    "followerRange": "1K - 10K",
+    "categories": [
+      "Teknoloji",
+      "Oyun",
+      "Eğlence"
+    ],
+    "verificationPhoto": "/uploads/1766841472949-397911373.png",
+    "status": "onaylandı",
+    "createdAt": "2025-12-27T13:17:52.962Z",
+    "updatedAt": "2025-12-27T13:19:21.689Z"
+  },
+  {
+    "id": "1767000525096",
+    "fullName": "Ecem Akcan",
+    "email": "eakcan.41@gmail.com",
+    "password": "123456",
+    "platforms": [
+      {
+        "id": "instagram",
+        "username": "ecemakcan"
+      },
+      {
+        "id": "tiktok",
+        "username": "swancap"
+      }
+    ],
+    "followerRange": "1K - 10K",
+    "categories": [
+      "Moda",
+      "Güzellik",
+      "Eğlence"
+    ],
+    "verificationPhoto": "/uploads/1767000525086-210139535.png",
+    "status": "onaylandı",
+    "createdAt": "2025-12-29T09:28:45.096Z",
+    "updatedAt": "2025-12-29T09:29:25.081Z"
+  },
+  {
+    "id": "1767911046797-vgzl1m2pt",
+    "fullName": "deneme deneme",
+    "email": "deneme@gmail.com",
+    "password": "123456",
+    "platforms": [
+      {
+        "id": "instagram",
+        "username": "sddds@gmail.com"
+      }
+    ],
+    "followerRange": "1K - 10K",
+    "categories": [
+      "Güzellik"
+    ],
+    "verificationPhoto": "/uploads/1767911046788-366229922.png",
+    "status": "onaylandı",
+    "createdAt": "2026-01-08T22:24:06.797Z",
+    "updatedAt": "2026-01-08T22:24:35.754Z"
+  }
+]

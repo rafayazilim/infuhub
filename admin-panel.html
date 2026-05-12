@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>İNFUHUB Admin Panel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f1f5f9;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 32px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #3b82f6, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .tab {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid transparent;
+            padding: 12px 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .tab:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .tab.active {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: #3b82f6;
+            color: #3b82f6;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-label {
+            color: #94a3b8;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #3b82f6;
+        }
+
+        .content {
+            display: none;
+        }
+
+        .content.active {
+            display: block;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .card-info {
+            flex: 1;
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: #f1f5f9;
+        }
+
+        .card-email {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge.beklemede {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+            border: 1px solid #fbbf24;
+        }
+
+        .badge.onaylandi {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            border: 1px solid #22c55e;
+        }
+
+        .badge.reddedildi {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid #ef4444;
+        }
+
+        .card-body {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .info-label {
+            color: #94a3b8;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            color: #f1f5f9;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .platforms, .categories {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .platform-tag, .category-tag {
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid #3b82f6;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            color: #3b82f6;
+            font-weight: 500;
+        }
+
+        .category-tag {
+            background: rgba(6, 182, 212, 0.2);
+            border-color: #06b6d4;
+            color: #06b6d4;
+        }
+
+        .verification-photo {
+            margin-top: 12px;
+        }
+
+        .verification-photo img {
+            max-width: 300px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .verification-photo img:hover {
+            transform: scale(1.05);
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-approve {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+        }
+
+        .btn-reject {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        .btn-pending {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #94a3b8;
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #94a3b8;
+        }
+
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border-top: 3px solid #3b82f6;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .card-body {
+                grid-template-columns: 1fr;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>İNFUHUB Admin Panel</h1>
+            <p class="subtitle">Marka ve Influencer kayıtlarını yönetin</p>
+        </header>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-label">Toplam Marka</div>
+                <div class="stat-value" id="totalBrands">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Bekleyen Markalar</div>
+                <div class="stat-value" id="pendingBrands">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Toplam Influencer</div>
+                <div class="stat-value" id="totalInfluencers">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Bekleyen Influencer</div>
+                <div class="stat-value" id="pendingInfluencers">0</div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('brands')">Markalar</button>
+            <button class="tab" onclick="switchTab('influencers')">Influencer'lar</button>
+        </div>
+
+        <div id="brands-content" class="content active">
+            <div id="brands-list" class="loading">
+                <div class="spinner"></div>
+                <p>Markalar yükleniyor...</p>
+            </div>
+        </div>
+
+        <div id="influencers-content" class="content">
+            <div id="influencers-list" class="loading">
+                <div class="spinner"></div>
+                <p>Influencer'lar yükleniyor...</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="imageModal" class="modal" onclick="closeModal()">
+        <img id="modalImage" src="" alt="Doğrulama Fotoğrafı">
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3002/api';
+        let brands = [];
+        let influencers = [];
+
+        // Sayfa yüklendiğinde verileri çek
+        document.addEventListener('DOMContentLoaded', () => {
+            loadBrands();
+            loadInfluencers();
+        });
+
+        // Sekme değiştir
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(`${tab}-content`).classList.add('active');
+        }
+
+        // Markaları yükle
+        async function loadBrands() {
+            try {
+                const response = await fetch(`${API_URL}/brands`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    brands = data.data;
+                    renderBrands();
+                    updateStats();
+                }
+            } catch (error) {
+                console.error('Markalar yüklenirken hata:', error);
+                document.getElementById('brands-list').innerHTML = `
+                    <div class="empty-state">
+                        <p>Markalar yüklenirken bir hata oluştu!</p>
+                        <p style="font-size: 12px; margin-top: 8px;">Backend sunucusunun çalıştığından emin olun.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Influencer'ları yükle
+        async function loadInfluencers() {
+            try {
+                const response = await fetch(`${API_URL}/influencers`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    influencers = data.data;
+                    renderInfluencers();
+                    updateStats();
+                }
+            } catch (error) {
+                console.error('Influencer\'lar yüklenirken hata:', error);
+                document.getElementById('influencers-list').innerHTML = `
+                    <div class="empty-state">
+                        <p>Influencer'lar yüklenirken bir hata oluştu!</p>
+                        <p style="font-size: 12px; margin-top: 8px;">Backend sunucusunun çalıştığından emin olun.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Markaları render et
+        function renderBrands() {
+            const container = document.getElementById('brands-list');
+            
+            if (brands.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                        </svg>
+                        <p>Henüz kayıtlı marka yok</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = brands.map(brand => `
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-info">
+                            <div class="card-title">${brand.brandName}</div>
+                            <div class="card-email">${brand.email}</div>
+                        </div>
+                        <span class="badge ${brand.status}">${brand.status}</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="info-item">
+                            <div class="info-label">Sektör</div>
+                            <div class="info-value">${brand.industry}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Aylık Bütçe</div>
+                            <div class="info-value">${getBudgetLabel(brand.budget)}</div>
+                        </div>
+                        ${brand.website ? `
+                            <div class="info-item">
+                                <div class="info-label">Website</div>
+                                <div class="info-value">
+                                    <a href="${brand.website}" target="_blank" style="color: #3b82f6;">${brand.website}</a>
+                                </div>
+                            </div>
+                        ` : ''}
+                        <div class="info-item">
+                            <div class="info-label">Kayıt Tarihi</div>
+                            <div class="info-value">${new Date(brand.createdAt).toLocaleString('tr-TR')}</div>
+                        </div>
+                    </div>
+                    <div class="actions">
+                        <button class="btn btn-approve" onclick="updateStatus('brand', '${brand.id}', 'onaylandı')" ${brand.status === 'onaylandı' ? 'disabled' : ''}>
+                            Onayla
+                        </button>
+                        <button class="btn btn-reject" onclick="updateStatus('brand', '${brand.id}', 'reddedildi')" ${brand.status === 'reddedildi' ? 'disabled' : ''}>
+                            Reddet
+                        </button>
+                        <button class="btn btn-pending" onclick="updateStatus('brand', '${brand.id}', 'beklemede')" ${brand.status === 'beklemede' ? 'disabled' : ''}>
+                            Beklemede
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Influencer'ları render et
+        function renderInfluencers() {
+            const container = document.getElementById('influencers-list');
+            
+            if (influencers.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                        <p>Henüz kayıtlı influencer yok</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = influencers.map(inf => `
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-info">
+                            <div class="card-title">${inf.fullName}</div>
+                            <div class="card-email">${inf.email}</div>
+                        </div>
+                        <span class="badge ${inf.status}">${inf.status}</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="info-item">
+                            <div class="info-label">Platformlar</div>
+                            <div class="platforms">
+                                ${inf.platforms.map(p => `
+                                    <span class="platform-tag">${p.id}: @${p.username}</span>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Takipçi Sayısı</div>
+                            <div class="info-value">${inf.followerRange}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Kategoriler</div>
+                            <div class="categories">
+                                ${inf.categories.map(cat => `
+                                    <span class="category-tag">${cat}</span>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Kayıt Tarihi</div>
+                            <div class="info-value">${new Date(inf.createdAt).toLocaleString('tr-TR')}</div>
+                        </div>
+                    </div>
+                    ${inf.verificationPhoto ? `
+                        <div class="verification-photo">
+                            <div class="info-label" style="margin-bottom: 8px;">Doğrulama Fotoğrafı</div>
+                            <img src="${API_URL.replace('/api', '')}${inf.verificationPhoto}" 
+                                 alt="Doğrulama" 
+                                 onclick="openModal('${API_URL.replace('/api', '')}${inf.verificationPhoto}')">
+                        </div>
+                    ` : ''}
+                    <div class="actions" style="margin-top: 16px;">
+                        <button class="btn btn-approve" onclick="updateStatus('influencer', '${inf.id}', 'onaylandı')" ${inf.status === 'onaylandı' ? 'disabled' : ''}>
+                            Onayla
+                        </button>
+                        <button class="btn btn-reject" onclick="updateStatus('influencer', '${inf.id}', 'reddedildi')" ${inf.status === 'reddedildi' ? 'disabled' : ''}>
+                            Reddet
+                        </button>
+                        <button class="btn btn-pending" onclick="updateStatus('influencer', '${inf.id}', 'beklemede')" ${inf.status === 'beklemede' ? 'disabled' : ''}>
+                            Beklemede
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Durum güncelle
+        async function updateStatus(type, id, status) {
+            try {
+                const endpoint = type === 'brand' ? 'brands' : 'influencers';
+                const response = await fetch(`${API_URL}/${endpoint}/${id}/status`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ status }),
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Verileri yeniden yükle
+                    if (type === 'brand') {
+                        await loadBrands();
+                    } else {
+                        await loadInfluencers();
+                    }
+                    alert('Durum başarıyla güncellendi!');
+                } else {
+                    alert(data.message || 'Bir hata oluştu!');
+                }
+            } catch (error) {
+                console.error('Durum güncellenirken hata:', error);
+                alert('Durum güncellenirken bir hata oluştu!');
+            }
+        }
+
+        // İstatistikleri güncelle
+        function updateStats() {
+            document.getElementById('totalBrands').textContent = brands.length;
+            document.getElementById('pendingBrands').textContent = brands.filter(b => b.status === 'beklemede').length;
+            document.getElementById('totalInfluencers').textContent = influencers.length;
+            document.getElementById('pendingInfluencers').textContent = influencers.filter(i => i.status === 'beklemede').length;
+        }
+
+        // Bütçe etiketi
+        function getBudgetLabel(budget) {
+            const labels = ["₺5.000", "₺25.000", "₺50.000", "₺100.000", "₺250.000+"];
+            return labels[budget] || "Belirtilmemiş";
+        }
+
+        // Modal aç
+        function openModal(imageSrc) {
+            document.getElementById('modalImage').src = imageSrc;
+            document.getElementById('imageModal').classList.add('active');
+        }
+
+        // Modal kapat
+        function closeModal() {
+            document.getElementById('imageModal').classList.remove('active');
+        }
+
+        // Her 30 saniyede bir verileri güncelle
+        setInterval(() => {
+            loadBrands();
+            loadInfluencers();
+        }, 30000);
+    </script>
+</body>
+</html>
+

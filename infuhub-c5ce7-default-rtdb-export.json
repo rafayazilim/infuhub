@@ -1,0 +1,463 @@
+7{
+  "brands": {
+    "OeFxWGZcQMPQcfVMuSsAMSSnikv2": {
+      "brandName": "RAFA YAZILIM",
+      "budget": 1,
+      "campaigns": {
+        "-OidXiJxBWB72yoLs16t": {
+          "brandId": "OeFxWGZcQMPQcfVMuSsAMSSnikv2",
+          "budget": {
+            "perInfluencer": 1000,
+            "total": 50000
+          },
+          "contentFormats": [
+            "Story"
+          ],
+          "createdAt": "2026-01-10T20:13:32.682Z",
+          "duration": {
+            "end": "2026-01-31",
+            "start": "2026-01-10"
+          },
+          "id": "-OidXiJxBWB72yoLs16t",
+          "platforms": [
+            "Instagram"
+          ],
+          "productDescription": "deneme123",
+          "productInfo": "DENEME",
+          "status": "aktif",
+          "targetAudience": {
+            "ageRange": "12-34",
+            "interests": "Teknoloji",
+            "location": "Türkiye"
+          },
+          "title": "DENEME",
+          "updatedAt": "2026-01-10T20:13:32.682Z"
+        },
+        "-OjFsspYKT5EqLgRsDSz": {
+          "brandId": "OeFxWGZcQMPQcfVMuSsAMSSnikv2",
+          "budget": {
+            "perInfluencer": 5000,
+            "total": 20000
+          },
+          "contentFormats": [
+            "Reels"
+          ],
+          "createdAt": "2026-01-18T11:35:33.485Z",
+          "duration": {
+            "end": "2026-01-31",
+            "start": "2026-01-18"
+          },
+          "id": "-OjFsspYKT5EqLgRsDSz",
+          "platforms": [
+            "Instagram",
+            "TikTok"
+          ],
+          "productDescription": "İphone 14 pro max",
+          "productInfo": "Telefon",
+          "status": "aktif",
+          "targetAudience": {
+            "ageRange": "13-40",
+            "interests": "Teknoloji",
+            "location": "Türkiye"
+          },
+          "title": "Telefon",
+          "updatedAt": "2026-01-18T11:35:33.485Z"
+        },
+        "-OjGScOz8HYVxZ3dxpLd": {
+          "brandId": "OeFxWGZcQMPQcfVMuSsAMSSnikv2",
+          "budget": {
+            "perInfluencer": 20000,
+            "total": 1000000
+          },
+          "contentFormats": [
+            "Reels"
+          ],
+          "createdAt": "2026-01-18T14:16:05.919Z",
+          "duration": {
+            "end": "2026-02-19",
+            "start": "2026-01-18"
+          },
+          "id": "-OjGScOz8HYVxZ3dxpLd",
+          "platforms": [
+            "Instagram"
+          ],
+          "productDescription": "sadasd",
+          "productInfo": "WEB Yazılımı",
+          "status": "aktif",
+          "targetAudience": {
+            "ageRange": "12",
+            "interests": "Teknoloji",
+            "location": "Türkiye"
+          },
+          "title": "WEB Yazılımı",
+          "updatedAt": "2026-01-18T14:16:05.919Z"
+        },
+        "-OjGSv_t0SdtxCGB1T9K": {
+          "brandId": "OeFxWGZcQMPQcfVMuSsAMSSnikv2",
+          "budget": {
+            "perInfluencer": 2312,
+            "total": 1232132
+          },
+          "contentFormats": [
+            "Story",
+            "Reels"
+          ],
+          "createdAt": "2026-01-18T14:17:24.504Z",
+          "duration": {
+            "end": "2026-02-04",
+            "start": "2026-01-18"
+          },
+          "id": "-OjGSv_t0SdtxCGB1T9K",
+          "platforms": [
+            "Instagram"
+          ],
+          "productDescription": "sadasd",
+          "productInfo": "asd",
+          "status": "aktif",
+          "targetAudience": {
+            "ageRange": "12",
+            "interests": "sadc",
+            "location": "safdsa"
+          },
+          "title": "asd",
+          "updatedAt": "2026-01-18T14:17:24.504Z"
+        },
+        "-OjGUYEJLhdjnausHSOr": {
+          "brandId": "OeFxWGZcQMPQcfVMuSsAMSSnikv2",
+          "budget": {
+            "perInfluencer": 4997,
+            "total": 1000000
+          },
+          "contentFormats": [
+            "Story"
+          ],
+          "createdAt": "2026-01-18T14:24:29.033Z",
+          "duration": {
+            "end": "2026-01-18",
+            "start": "2026-01-18"
+          },
+          "id": "-OjGUYEJLhdjnausHSOr",
+          "platforms": [
+            "Instagram"
+          ],
+          "productDescription": "ncmxncxcz",
+          "productInfo": "LİNKLİ ÜRÜN",
+          "status": "aktif",
+          "targetAudience": {
+            "ageRange": "13",
+            "interests": "Moda",
+            "location": "Türkiye"
+          },
+          "title": "LİNKLİ ÜRÜN",
+          "updatedAt": "2026-01-18T14:24:29.033Z"
+        },
+        "-OjGc-hJ9HH-dwVOmoUr": {
+          "brandId": "OeFxWGZcQMPQcfVMuSsAMSSnikv2",
+          "budget": {
+            "perInfluencer": 123123,
+            "total": 123
+          },
+          "contentFormats": [
+            "Reels"
+          ],
+          "createdAt": "2026-01-18T15:01:26.858Z",
+          "duration": {
+            "end": "2026-02-06",
+            "start": "2026-01-10"
+          },
+          "id": "-OjGc-hJ9HH-dwVOmoUr",
+          "platforms": [
+            "TikTok"
+          ],
+          "productDescription": "ascfzxdaas",
+          "productInfo": "asdacxzc",
+          "status": "aktif",
+          "targetAudience": {
+            "ageRange": "21",
+            "interests": "sacxz",
+            "location": "asczx"
+          },
+          "title": "asdacxzc",
+          "updatedAt": "2026-01-18T15:01:26.858Z"
+        },
+        "-Ojez50Jp6V8jSgdxspV": {
+          "brandId": "OeFxWGZcQMPQcfVMuSsAMSSnikv2",
+          "budget": {
+            "perInfluencer": 3999,
+            "total": 30000
+          },
+          "contentFormats": [
+            "Reels"
+          ],
+          "createdAt": "2026-01-23T13:12:45.627Z",
+          "duration": {
+            "end": "2026-01-31",
+            "start": "2026-01-23"
+          },
+          "id": "-Ojez50Jp6V8jSgdxspV",
+          "platforms": [
+            "Instagram",
+            "TikTok"
+          ],
+          "productDescription": "afasf",
+          "productInfo": "deneme2",
+          "status": "aktif",
+          "targetAudience": {
+            "ageRange": "12",
+            "interests": "Teknoloji",
+            "location": "Türkiye"
+          },
+          "title": "deneme2",
+          "updatedAt": "2026-01-23T13:12:45.627Z"
+        }
+      },
+      "createdAt": "2026-01-10T15:15:33.404Z",
+      "email": "hello@rafayazilim.com",
+      "id": "OeFxWGZcQMPQcfVMuSsAMSSnikv2",
+      "industry": "Teknoloji",
+      "status": "onaylandı",
+      "updatedAt": "2026-01-10T15:39:14.429Z",
+      "userType": "brand",
+      "website": "rafayazilim.com"
+    }
+  },
+  "influencers": {
+    "qndIXQMaFlefLZtftAahaiabzay2": {
+      "categories": [
+        "Yaşam Tarzı",
+        "Teknoloji"
+      ],
+      "createdAt": "2026-01-16T11:12:46.907Z",
+      "email": "infudeneme@gmail.com",
+      "followerRange": "100K - 500K",
+      "fullName": "İnfu Deneme",
+      "id": "qndIXQMaFlefLZtftAahaiabzay2",
+      "platforms": [
+        {
+          "followers": 40000,
+          "id": "instagram",
+          "username": "infudeneme"
+        },
+        {
+          "followers": 130000,
+          "id": "tiktok",
+          "username": "seemiiramiss"
+        },
+        {
+          "followers": 1300,
+          "id": "twitter",
+          "username": "seemiiramiss"
+        },
+        {
+          "followers": 450,
+          "id": "youtube",
+          "username": "semiramis"
+        }
+      ],
+      "status": "onaylandı",
+      "updatedAt": "2026-01-18T15:15:11.881Z",
+      "userType": "influencer"
+    }
+  },
+  "offers": {
+    "-Oj6S6ITKJt49vk-ymIK": {
+      "brandId": "OeFxWGZcQMPQcfVMuSsAMSSnikv2",
+      "campaignId": "-OidXiJxBWB72yoLs16t",
+      "createdAt": "2026-01-16T15:37:36.365Z",
+      "id": "-Oj6S6ITKJt49vk-ymIK",
+      "influencerId": "qndIXQMaFlefLZtftAahaiabzay2",
+      "message": "video tanıtımı en az 15 sn olmalı",
+      "price": 3000,
+      "respondedAt": "2026-01-16T16:11:47.541Z",
+      "status": "kabul",
+      "updatedAt": "2026-01-16T16:11:47.541Z"
+    },
+    "-OjGRp58FEZRhzOd4LYY": {
+      "brandId": "OeFxWGZcQMPQcfVMuSsAMSSnikv2",
+      "campaignId": "-OjFsspYKT5EqLgRsDSz",
+      "createdAt": "2026-01-18T14:12:35.753Z",
+      "id": "-OjGRp58FEZRhzOd4LYY",
+      "influencerId": "qndIXQMaFlefLZtftAahaiabzay2",
+      "message": "deneme mesaji link izleme",
+      "price": 3000,
+      "respondedAt": "2026-01-18T14:13:07.612Z",
+      "status": "kabul",
+      "updatedAt": "2026-01-18T14:13:07.612Z"
+    },
+    "-OjGSj-J2bTyn8QhE2oy": {
+      "brandId": "OeFxWGZcQMPQcfVMuSsAMSSnikv2",
+      "campaignId": "-OjGScOz8HYVxZ3dxpLd",
+      "createdAt": "2026-01-18T14:16:32.940Z",
+      "id": "-OjGSj-J2bTyn8QhE2oy",
+      "influencerId": "qndIXQMaFlefLZtftAahaiabzay2",
+      "message": "asdasad",
+      "price": 5000,
+      "respondedAt": "2026-01-18T14:22:44.396Z",
+      "status": "red",
+      "updatedAt": "2026-01-18T14:22:44.396Z"
+    },
+    "-OjGT0m6889GmClMaU62": {
+      "brandId": "OeFxWGZcQMPQcfVMuSsAMSSnikv2",
+      "campaignId": "-OjGSv_t0SdtxCGB1T9K",
+      "createdAt": "2026-01-18T14:17:49.859Z",
+      "id": "-OjGT0m6889GmClMaU62",
+      "influencerId": "qndIXQMaFlefLZtftAahaiabzay2",
+      "message": "dafdsf",
+      "price": 1222,
+      "respondedAt": "2026-01-18T14:19:23.880Z",
+      "status": "kabul",
+      "updatedAt": "2026-01-18T14:19:23.880Z"
+    },
+    "-OjGUih_N7LK3TCOYQSb": {
+      "brandId": "OeFxWGZcQMPQcfVMuSsAMSSnikv2",
+      "campaignId": "-OjGUYEJLhdjnausHSOr",
+      "createdAt": "2026-01-18T14:25:16.023Z",
+      "id": "-OjGUih_N7LK3TCOYQSb",
+      "influencerId": "qndIXQMaFlefLZtftAahaiabzay2",
+      "message": "casczac",
+      "price": 3099,
+      "respondedAt": "2026-01-18T14:26:05.668Z",
+      "status": "kabul",
+      "updatedAt": "2026-01-18T14:26:05.668Z"
+    },
+    "-OjGcC4RxkatOGZ-9Rfi": {
+      "brandId": "OeFxWGZcQMPQcfVMuSsAMSSnikv2",
+      "campaignId": "-OjGc-hJ9HH-dwVOmoUr",
+      "createdAt": "2026-01-18T15:02:17.552Z",
+      "id": "-OjGcC4RxkatOGZ-9Rfi",
+      "influencerId": "qndIXQMaFlefLZtftAahaiabzay2",
+      "message": "sc<xscad",
+      "price": 2222,
+      "respondedAt": "2026-01-18T15:02:44.099Z",
+      "status": "kabul",
+      "updatedAt": "2026-01-18T15:02:44.099Z"
+    },
+    "-OjezIZQ5NRyz5lRb4Mz": {
+      "brandId": "OeFxWGZcQMPQcfVMuSsAMSSnikv2",
+      "campaignId": "-Ojez50Jp6V8jSgdxspV",
+      "createdAt": "2026-01-23T13:13:41.107Z",
+      "id": "-OjezIZQ5NRyz5lRb4Mz",
+      "influencerId": "qndIXQMaFlefLZtftAahaiabzay2",
+      "message": "asdsaddsa",
+      "price": 3000,
+      "respondedAt": "2026-01-23T13:14:01.846Z",
+      "status": "kabul",
+      "updatedAt": "2026-01-23T13:14:01.846Z"
+    }
+  },
+  "tracking_links": {
+    "0e2Swk": {
+      "brandId": "OeFxWGZcQMPQcfVMuSsAMSSnikv2",
+      "campaignId": "-Ojez50Jp6V8jSgdxspV",
+      "clickCount": 5,
+      "clicks": {
+        "-OjezW6t4MuanZHWd2qY": {
+          "clickedAt": "2026-01-23T13:14:36.627Z",
+          "ipHash": "eff8e7ca506627fe15dda5e0e512fcaad70b6d520f37cc76597fdb4f2d83a1a3",
+          "referrer": "",
+          "source": "instagram",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"
+        },
+        "-OjezWuyaCP-AgP6xBAw": {
+          "clickedAt": "2026-01-23T13:14:39.896Z",
+          "ipHash": "eff8e7ca506627fe15dda5e0e512fcaad70b6d520f37cc76597fdb4f2d83a1a3",
+          "referrer": "",
+          "source": "instagram",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"
+        },
+        "-OjezY0DAaIzut68sxtG": {
+          "clickedAt": "2026-01-23T13:14:44.392Z",
+          "ipHash": "eff8e7ca506627fe15dda5e0e512fcaad70b6d520f37cc76597fdb4f2d83a1a3",
+          "referrer": "",
+          "source": "instagram",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"
+        },
+        "-OkTcpAEiXWVvc4wJC3H": {
+          "clickedAt": "2026-02-02T13:55:47.405Z",
+          "ipHash": "eff8e7ca506627fe15dda5e0e512fcaad70b6d520f37cc76597fdb4f2d83a1a3",
+          "referrer": "",
+          "source": "instagram",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"
+        },
+        "-OkTcpyLWp-mJj5A1pcr": {
+          "clickedAt": "2026-02-02T13:55:50.676Z",
+          "ipHash": "eff8e7ca506627fe15dda5e0e512fcaad70b6d520f37cc76597fdb4f2d83a1a3",
+          "referrer": "",
+          "source": "instagram",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"
+        }
+      },
+      "createdAt": "2026-01-23T13:13:41.758Z",
+      "influencerId": "qndIXQMaFlefLZtftAahaiabzay2",
+      "isActive": true,
+      "offerId": "-OjezIZQ5NRyz5lRb4Mz",
+      "platform": "instagram",
+      "shortCode": "0e2Swk",
+      "targetUrl": "https://rafayazilim.com/"
+    },
+    "1TBZko": {
+      "brandId": "OeFxWGZcQMPQcfVMuSsAMSSnikv2",
+      "campaignId": "-OjGc-hJ9HH-dwVOmoUr",
+      "clickCount": 4,
+      "clicks": {
+        "-OjGcM96esUMTGwv8t8W": {
+          "clickedAt": "2026-01-18T15:02:58.807Z",
+          "ipHash": "eff8e7ca506627fe15dda5e0e512fcaad70b6d520f37cc76597fdb4f2d83a1a3",
+          "referrer": "",
+          "source": "tiktok",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+        },
+        "-OjGcN5DkzM_X3BRaw_B": {
+          "clickedAt": "2026-01-18T15:03:02.654Z",
+          "ipHash": "eff8e7ca506627fe15dda5e0e512fcaad70b6d520f37cc76597fdb4f2d83a1a3",
+          "referrer": "",
+          "source": "tiktok",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+        },
+        "-OjGcNvHSCIolrACvk7N": {
+          "clickedAt": "2026-01-18T15:03:06.049Z",
+          "ipHash": "eff8e7ca506627fe15dda5e0e512fcaad70b6d520f37cc76597fdb4f2d83a1a3",
+          "referrer": "",
+          "source": "tiktok",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+        },
+        "-OjGcOqUytDaWGpOHvc_": {
+          "clickedAt": "2026-01-18T15:03:09.839Z",
+          "ipHash": "eff8e7ca506627fe15dda5e0e512fcaad70b6d520f37cc76597fdb4f2d83a1a3",
+          "referrer": "",
+          "source": "tiktok",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+        }
+      },
+      "createdAt": "2026-01-18T15:02:19.318Z",
+      "influencerId": "qndIXQMaFlefLZtftAahaiabzay2",
+      "isActive": true,
+      "offerId": "-OjGcC4RxkatOGZ-9Rfi",
+      "platform": "tiktok",
+      "shortCode": "1TBZko",
+      "targetUrl": "https://www.bursaspor.org.tr/"
+    },
+    "5TcFlT": {
+      "brandId": "OeFxWGZcQMPQcfVMuSsAMSSnikv2",
+      "campaignId": "-OjGSv_t0SdtxCGB1T9K",
+      "createdAt": "2026-01-18T14:17:51.349Z",
+      "influencerId": "qndIXQMaFlefLZtftAahaiabzay2",
+      "isActive": true,
+      "offerId": "-OjGT0m6889GmClMaU62",
+      "platform": "instagram",
+      "shortCode": "5TcFlT",
+      "targetUrl": "https://rafayazilim.com/"
+    },
+    "ce1pIV": {
+      "brandId": "OeFxWGZcQMPQcfVMuSsAMSSnikv2",
+      "campaignId": "-OjGUYEJLhdjnausHSOr",
+      "createdAt": "2026-01-18T14:25:17.438Z",
+      "influencerId": "qndIXQMaFlefLZtftAahaiabzay2",
+      "isActive": true,
+      "offerId": "-OjGUih_N7LK3TCOYQSb",
+      "platform": "instagram",
+      "shortCode": "ce1pIV",
+      "targetUrl": "https://rafayazilim.com/"
+    }
+  }
+}
